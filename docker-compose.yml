@@ -1,0 +1,65 @@
+services:
+  # Redis Queue Broker
+  redis:
+    image: redis:7-alpine
+    container_name: saarthi-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Next.js Web App & Main Backend
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: saarthi-web
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - FASTAPI_URL=http://ai-service:8000
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  # Python FastAPI AI / Processing Service
+  ai-service:
+    build:
+      context: .
+      dockerfile: apps/ai-service/Dockerfile
+    container_name: saarthi-ai-service
+    restart: unless-stopped
+    ports:
+      - '8000:8000'
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  # Node.js BullMQ Worker Service
+  workers:
+    build:
+      context: .
+      dockerfile: apps/workers/Dockerfile
+    container_name: saarthi-workers
+    restart: unless-stopped
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  redis-data:
+    driver: local

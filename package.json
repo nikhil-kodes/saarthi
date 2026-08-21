@@ -1,0 +1,24 @@
+{
+  "name": "saarthi",
+  "private": true,
+  "packageManager": "pnpm@11.3.0",
+  "scripts": {
+    "dev": "turbo dev",
+    "dev:web": "pnpm --filter @saarthi/web dev",
+    "dev:workers": "pnpm --filter @saarthi/workers dev",
+    "dev:ai": "if [ -f apps/ai-service/.venv/bin/uvicorn ]; then apps/ai-service/.venv/bin/uvicorn app.main:app --app-dir apps/ai-service --host 0.0.0.0 --port 8000 --reload; else uvicorn app.main:app --app-dir apps/ai-service --host 0.0.0.0 --port 8000 --reload; fi",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "test": "turbo test",
+    "test:ai": "if [ -f apps/ai-service/.venv/bin/pytest ]; then apps/ai-service/.venv/bin/pytest apps/ai-service/tests; else pytest apps/ai-service/tests; fi",
+    "clean": "turbo clean"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.0",
+    "typescript": "^5.7.0",
+    "prettier": "^3.4.0",
+    "@types/node": "^22.0.0"
+  }
+}

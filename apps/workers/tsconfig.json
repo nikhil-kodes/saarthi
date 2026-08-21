@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "@saarthi/shared-types": ["../../packages/shared-types/src"],
+      "@saarthi/config": ["../../packages/config/src"]
+    }
+  },
+  "include": ["src"]
+}

@@ -1,0 +1,27 @@
+@import '../styles/fonts.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #F7F6F3;
+  --foreground: #12151A;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Tabular lining figures for numbers, currency amounts, dates, and scores per DESIGN.md §3 */
+.tabular-nums {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Locale-aware line height support */
+[lang='hi'] {
+  line-height: 1.7;
+}
