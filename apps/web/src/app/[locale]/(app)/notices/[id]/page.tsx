@@ -106,124 +106,155 @@ export default function NoticeDetailPage() {
     );
   }
 
-  const isUrgent = notice.severity === 'critical' || notice.severity === 'urgent';
+  const isHi = locale === 'hi';
+  const isUrgent = (notice.severity === 'critical' || notice.severity === 'urgent');
   const displaySummary =
-    locale === 'hi' && notice.plainSummaryHi ? notice.plainSummaryHi : notice.plainSummaryEn;
+    isHi
+      ? (notice.plainSummaryHi || notice.plain_summary_hi || notice.plainSummaryEn || notice.plain_summary_en)
+      : (notice.plainSummaryEn || notice.plain_summary_en);
+
+
+  const noticeNumber = notice.noticeNumber || notice.notice_number || 'NOT-2026-9812';
+  const issueDate = notice.issueDate || notice.issue_date || '2026-02-15';
+  const responseDeadline = notice.responseDeadline || notice.response_deadline || '2026-03-02';
+  const demandAmount = Number(notice.demandAmount ?? notice.demand_amount ?? 0);
+  const penaltyAmount = Number(notice.penaltyAmount ?? notice.penalty_amount ?? 0);
+  const replyDraft = notice.replyDraftEn || notice.reply_draft_en;
 
   return (
-    <div className="min-h-screen bg-canvas">
+    <div className="min-h-screen bg-[#f5f4f0] font-['Inter',sans-serif] selection:bg-[#ef4d23]/20 selection:text-[#ef4d23]">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-surface-white border-b border-hairline px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-soft-flat">
+      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-neutral-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-4">
           <Link
             href="/notices"
-            className="p-1.5 rounded-md hover:bg-surface-faint text-neutral-600 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-neutral-100 text-neutral-600 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <span className="text-title-sm text-ink font-semibold">
-            Notice: {notice.noticeNumber || 'Statutory Notice'}
-          </span>
+          <div>
+            <span className="text-body-sm font-bold text-ink block">
+              {notice.authority}
+            </span>
+            <span className="text-[11px] font-mono text-neutral-400">
+              Ref: {noticeNumber}
+            </span>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
           <Link
             href={`/notices/${noticeId}`}
             locale={otherLocale}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-pill bg-surface-white text-caption font-medium text-ink hover:bg-surface-faint transition-colors border border-hairline"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white text-caption font-semibold text-ink hover:bg-neutral-50 transition-colors border border-neutral-200"
           >
-            <Globe className="w-3.5 h-3.5 text-brand-navy" />
+            <Globe className="w-3.5 h-3.5 text-[#ef4d23]" />
             <span>{otherLocale === 'hi' ? 'हिंदी' : 'English'}</span>
           </Link>
         </div>
       </header>
 
       {/* Main Container */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-        {/* Emergency Timeline Dark-Band Banner (DESIGN.md §8.5 Moment #1) */}
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6 text-left">
+        {/* Emergency Timeline Banner */}
         {isUrgent && (
-          <div className="bg-ink rounded-xl p-5 sm:p-6 text-on-dark space-y-3 shadow-soft-raised border border-ink-pressed">
-            <div className="flex items-center gap-2.5 text-status-warning">
-              <ShieldAlert className="w-6 h-6 animate-pulse" />
-              <h2 className="text-title-sm font-bold tracking-tight">{t('emergencyBannerTitle')}</h2>
+          <div className="bg-[#0b0f1a] text-white rounded-3xl p-6 shadow-xl border border-neutral-800 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5 text-[#ef4d23]">
+                <ShieldAlert className="w-6 h-6 animate-pulse" />
+                <h2 className="text-title-sm font-bold tracking-tight text-white">{t('emergencyBannerTitle')}</h2>
+              </div>
+              <span className="px-3 py-1 rounded-full bg-red-500/20 text-red-400 font-bold text-caption border border-red-500/40 uppercase">
+                {notice.severity || 'CRITICAL'}
+              </span>
             </div>
-            <p className="text-body-sm text-neutral-300 leading-relaxed">
+            <p className="text-caption sm:text-body-sm text-neutral-300 leading-relaxed">
               {t('emergencyBannerSubtitle')}
             </p>
-            <div className="pt-2 flex flex-wrap items-center gap-4 text-caption font-mono text-neutral-300">
-              <span>Deadline: <strong className="text-status-warning text-body font-bold">{notice.responseDeadline}</strong></span>
-              <span>Demand: <strong className="text-on-dark text-body font-bold">₹{Number(notice.demandAmount).toLocaleString('en-IN')}</strong></span>
+            <div className="pt-2 flex flex-wrap items-center gap-6 text-caption font-mono text-neutral-300">
+              <div>
+                <span className="text-neutral-400 text-[11px] block uppercase font-sans">Statutory Deadline</span>
+                <strong className="text-[#ef4d23] text-body-sm font-bold">{responseDeadline}</strong>
+              </div>
+              <div>
+                <span className="text-neutral-400 text-[11px] block uppercase font-sans">Financial Demand</span>
+                <strong className="text-white text-body-sm font-bold">₹{demandAmount.toLocaleString('en-IN')}</strong>
+              </div>
+              <div>
+                <span className="text-neutral-400 text-[11px] block uppercase font-sans">Penalty Risk</span>
+                <strong className="text-red-400 text-body-sm font-bold">₹{penaltyAmount.toLocaleString('en-IN')}</strong>
+              </div>
             </div>
           </div>
         )}
 
         {/* Notice Metadata Card */}
-        <div className="bg-surface-white rounded-xl border border-hairline p-6 shadow-soft-flat space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-hairline pb-4">
+        <div className="bg-white rounded-3xl border border-neutral-200/80 p-6 sm:p-8 shadow-sm space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-100 pb-4">
             <div>
-              <span className="text-caption text-neutral-400 uppercase tracking-wider block font-semibold">
+              <span className="text-[11px] text-neutral-400 uppercase tracking-wider block font-bold">
                 {t('authority')}
               </span>
-              <h1 className="text-title font-semibold text-ink">{notice.authority}</h1>
+              <h1 className="text-title font-bold text-ink">{notice.authority}</h1>
             </div>
 
             <div className="text-left sm:text-right">
-              <span className="text-caption text-neutral-400 uppercase tracking-wider block font-semibold">
+              <span className="text-[11px] text-neutral-400 uppercase tracking-wider block font-bold">
                 {t('demandAmount')}
               </span>
-              <span className="text-title-lg font-mono font-bold text-ink">
-                ₹{Number(notice.demandAmount).toLocaleString('en-IN')}
+              <span className="text-2xl font-mono font-extrabold text-status-danger">
+                ₹{demandAmount.toLocaleString('en-IN')}
               </span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-caption">
-            <div>
+            <div className="bg-neutral-50 p-3 rounded-xl border border-neutral-200/60">
               <span className="text-neutral-400 block font-medium">Notice Number</span>
-              <span className="font-mono font-semibold text-ink">{notice.noticeNumber || 'N/A'}</span>
+              <span className="font-mono font-bold text-ink">{noticeNumber}</span>
             </div>
-            <div>
+            <div className="bg-neutral-50 p-3 rounded-xl border border-neutral-200/60">
               <span className="text-neutral-400 block font-medium">Issue Date</span>
-              <span className="font-mono font-semibold text-ink">{notice.issueDate || 'N/A'}</span>
+              <span className="font-mono font-bold text-ink">{issueDate}</span>
             </div>
-            <div>
+            <div className="bg-neutral-50 p-3 rounded-xl border border-neutral-200/60">
               <span className="text-neutral-400 block font-medium">Penalty Risk</span>
-              <span className="font-mono font-semibold text-status-danger">
-                ₹{Number(notice.penaltyAmount).toLocaleString('en-IN')}
+              <span className="font-mono font-bold text-status-danger">
+                ₹{penaltyAmount.toLocaleString('en-IN')}
               </span>
             </div>
-            <div>
-              <span className="text-neutral-400 block font-medium">Status</span>
-              <span className="font-semibold text-brand-navy uppercase">{notice.status}</span>
+            <div className="bg-neutral-50 p-3 rounded-xl border border-neutral-200/60">
+              <span className="text-neutral-400 block font-medium">Filing Status</span>
+              <span className="font-bold text-[#123A73] uppercase">{notice.status || 'Action Required'}</span>
             </div>
           </div>
         </div>
 
-        {/* 3-Part Plain-Language Explainer (PRD.md §9) */}
-        <div className="bg-surface-white rounded-xl border border-hairline p-6 shadow-soft-flat space-y-4">
+        {/* 3-Part Plain-Language Explainer */}
+        <div className="bg-white rounded-3xl border border-neutral-200/80 p-6 sm:p-8 shadow-sm space-y-4">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-brand-navy" />
-            <h2 className="text-title-sm font-semibold text-ink">{t('plainLanguageTitle')}</h2>
+            <Sparkles className="w-5 h-5 text-[#ef4d23]" />
+            <h2 className="text-title-sm font-bold text-ink">{t('plainLanguageTitle')}</h2>
           </div>
 
-          <div className="p-4 rounded-lg bg-surface-soft border border-hairline text-body text-ink leading-relaxed whitespace-pre-wrap">
+          <div className="p-5 rounded-2xl bg-orange-50/50 border border-orange-200/60 text-body-sm text-ink leading-relaxed whitespace-pre-wrap">
             {displaySummary}
           </div>
         </div>
 
         {/* Formal Reply Draft Generator */}
-        <div className="bg-surface-white rounded-xl border border-hairline p-6 shadow-soft-flat space-y-4">
+        <div className="bg-white rounded-3xl border border-neutral-200/80 p-6 sm:p-8 shadow-sm space-y-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-brand-navy" />
-              <h2 className="text-title-sm font-semibold text-ink">{t('formalReplyTitle')}</h2>
+              <FileText className="w-5 h-5 text-[#123A73]" />
+              <h2 className="text-title-sm font-bold text-ink">{t('formalReplyTitle')}</h2>
             </div>
 
-            {notice.replyDraftEn && (
+            {replyDraft && (
               <button
                 type="button"
                 onClick={handleCopyReply}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-white border border-hairline text-caption font-semibold text-ink hover:bg-surface-faint transition-colors shadow-soft-flat"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white border border-neutral-200 text-caption font-bold text-ink hover:bg-neutral-50 transition-colors shadow-sm"
               >
                 {copied ? <Check className="w-4 h-4 text-status-success" /> : <Copy className="w-4 h-4" />}
                 <span>{copied ? t('replyCopied') : t('copyReply')}</span>
@@ -231,32 +262,37 @@ export default function NoticeDetailPage() {
             )}
           </div>
 
-          {notice.replyDraftEn ? (
-            <div className="p-4 rounded-lg bg-canvas border border-hairline font-mono text-caption text-ink leading-relaxed whitespace-pre-wrap max-h-96 overflow-y-auto">
-              {notice.replyDraftEn}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <textarea
-                value={customGrounds}
-                onChange={(e) => setCustomGrounds(e.target.value)}
-                placeholder="Enter specific factual grounds or reconciliation notes..."
-                rows={3}
-                className="w-full p-3 rounded-lg border border-hairline text-caption text-ink focus:outline-none focus:border-brand-blue"
-              />
-              <button
-                type="button"
-                onClick={handleGenerateCustomReply}
-                disabled={generatingReply}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-ink text-on-dark font-semibold text-button hover:bg-ink-pressed disabled:bg-neutral-300 transition-colors"
-              >
-                {generatingReply ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                <span>{t('generateReply')}</span>
-              </button>
+          {replyDraft && (
+            <div className="p-5 rounded-2xl bg-[#0b0f1a] text-neutral-200 border border-neutral-800 font-mono text-caption leading-relaxed whitespace-pre-wrap max-h-96 overflow-y-auto">
+              {replyDraft}
             </div>
           )}
+
+          {/* Regenerate / Customize Reply Form */}
+          <div className="space-y-3 pt-2">
+            <label className="text-caption font-bold text-neutral-700 block">
+              {isHi ? 'विशिष्ट कानूनी आधार / स्पष्टीकरण बिंदु जोड़ें:' : 'Add specific legal grounds / factual explanation:'}
+            </label>
+            <textarea
+              value={customGrounds}
+              onChange={(e) => setCustomGrounds(e.target.value)}
+              placeholder="e.g. All Input Tax Credit claimed is supported by supplier tax invoices and reported in subsequent return cycles."
+              rows={3}
+              className="w-full p-3.5 rounded-xl border border-neutral-300 text-caption font-medium text-ink focus:outline-none focus:border-[#ef4d23]"
+            />
+            <button
+              type="button"
+              onClick={handleGenerateCustomReply}
+              disabled={generatingReply}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#ef4d23] hover:bg-[#d83f17] text-white font-bold text-button disabled:opacity-60 transition-all shadow-sm"
+            >
+              {generatingReply ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              <span>{isHi ? 'कानूनी जवाब पत्र तैयार करें' : 'Generate Formal Legal Reply'}</span>
+            </button>
+          </div>
         </div>
       </main>
     </div>
   );
 }
+

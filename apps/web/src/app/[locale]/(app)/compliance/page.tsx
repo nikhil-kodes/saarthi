@@ -6,7 +6,7 @@ import { Link } from '@/i18n/navigation';
 import { useParams } from 'next/navigation';
 import { SaarthiLogo } from '@/components/Navbar';
 import {
-  Calendar,
+  Calendar as CalendarIcon,
   CheckCircle2,
   Clock,
   AlertTriangle,
@@ -23,10 +23,18 @@ import {
   Upload,
   Globe,
   Loader2,
+  LayoutGrid,
+  ListFilter,
+  CalendarDays,
+  FileText,
+  AlertCircle,
+  Sparkles,
+  ArrowUpRight,
 } from 'lucide-react';
 import {
   AmbientOrbs,
   ArchitecturalGrid,
+  SpecularHorizonBeam,
 } from '@/components/ui/ambient-background';
 import type {
   ComplianceCategory,
@@ -42,17 +50,19 @@ export default function ComplianceCalendarPage() {
   const params = useParams();
 
   const locale = (params.locale as string) || 'en';
-  const otherLocale = locale === 'en' ? 'hi' : 'en';
+  const isHi = locale === 'hi';
+  const otherLocale = isHi ? 'en' : 'hi';
 
   const [instances, setInstances] = useState<ComplianceInstance[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [viewMode, setViewMode] = useState<'calendar' | 'agenda'>('calendar');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Calendar State
-  const [currentDate, setCurrentDate] = useState(new Date());
+  // Calendar Navigation State
+  const [currentDate, setCurrentDate] = useState(new Date(2026, 1, 1)); // Default Feb 2026
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   // Filing Modal State
@@ -88,7 +98,7 @@ export default function ComplianceCalendarPage() {
       const res = await fetch('/api/compliance/instances', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ year: new Date().getFullYear() }),
+        body: JSON.stringify({ year: currentDate.getFullYear() }),
       });
       const json = await res.json();
       if (json.success) {
@@ -136,9 +146,10 @@ export default function ComplianceCalendarPage() {
     }
   };
 
+  // Filter instances
   const filteredInstances = instances.filter((inst) => {
-    // Date Filter
-    if (selectedDate) {
+    // Date Filter (if selected on calendar)
+    if (selectedDate && viewMode === 'calendar') {
       const instDate = new Date(inst.dueDate);
       if (instDate.toDateString() !== selectedDate.toDateString()) {
         return false;
@@ -167,37 +178,9 @@ export default function ComplianceCalendarPage() {
     return true;
   });
 
-  const getStatusBadge = (status: ComplianceStatus) => {
-    switch (status) {
-      case 'compliant':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill bg-status-success-bg text-status-success border border-status-success/20 text-caption font-semibold">
-            <CheckCircle2 className="w-3 h-3" />
-            <span>{tStatus('compliant')}</span>
-          </span>
-        );
-      case 'due_soon':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill bg-status-warning-bg text-status-warning border border-status-warning/20 text-caption font-semibold">
-            <Clock className="w-3 h-3" />
-            <span>{tStatus('due_soon')}</span>
-          </span>
-        );
-      case 'overdue':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill bg-status-danger-bg text-status-danger border border-status-danger/20 text-caption font-semibold">
-            <AlertTriangle className="w-3 h-3" />
-            <span>{tStatus('overdue')}</span>
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill bg-surface-faint text-neutral-600 border border-hairline text-caption font-semibold">
-            <span>{status}</span>
-          </span>
-        );
-    }
-  };
+  const compliantCount = instances.filter((i) => i.status === 'compliant').length;
+  const dueSoonCount = instances.filter((i) => i.status === 'due_soon').length;
+  const overdueCount = instances.filter((i) => i.status === 'overdue').length;
 
   const monthNames = [
     t('january'), t('february'), t('march'), t('april'), t('may'), t('june'),
@@ -212,95 +195,203 @@ export default function ComplianceCalendarPage() {
   const handlePrevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
   const handleNextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
   const handleToday = () => {
-    setCurrentDate(new Date());
+    setCurrentDate(new Date(2026, 1, 1));
     setSelectedDate(null);
   };
 
-  const renderCalendar = () => {
+  const getStatusBadge = (status: ComplianceStatus) => {
+    switch (status) {
+      case 'compliant':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-caption font-bold">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+            <span>{tStatus('compliant')}</span>
+          </span>
+        );
+      case 'due_soon':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-caption font-bold animate-pulse">
+            <Clock className="w-3.5 h-3.5 text-amber-600" />
+            <span>{tStatus('due_soon')}</span>
+          </span>
+        );
+      case 'overdue':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 text-red-700 border border-red-200 text-caption font-bold">
+            <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
+            <span>{tStatus('overdue')}</span>
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-neutral-100 text-neutral-700 border border-neutral-200 text-caption font-medium">
+            <span>{status}</span>
+          </span>
+        );
+    }
+  };
+
+  // Modern Shadcn / 21st.dev Style Calendar Grid View
+  const renderShadcnCalendar = () => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     const daysInMonth = getDaysInMonth(year, month);
     const firstDay = getFirstDayOfMonth(year, month);
-    
+
     const days = [];
     for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} className="h-14 sm:h-20 bg-surface-white/40 border border-hairline/50 rounded-xl" />);
+      days.push(
+        <div
+          key={`empty-${i}`}
+          className="min-h-[90px] sm:min-h-[110px] bg-neutral-50/50 rounded-2xl border border-neutral-200/40 p-2 opacity-30"
+        />
+      );
     }
-    
-    const todayStr = new Date().toDateString();
-    
+
+    const todayStr = new Date(2026, 1, 20).toDateString(); // Simulated live day in Feb 2026
+
     for (let d = 1; d <= daysInMonth; d++) {
       const date = new Date(year, month, d);
       const dateStr = date.toDateString();
       const isToday = dateStr === todayStr;
       const isSelected = selectedDate?.toDateString() === dateStr;
-      
-      const dayInstances = instances.filter(i => new Date(i.dueDate).toDateString() === dateStr);
-      const hasCompliant = dayInstances.some(i => i.status === 'compliant');
-      const hasDueSoon = dayInstances.some(i => i.status === 'due_soon');
-      const hasOverdue = dayInstances.some(i => i.status === 'overdue');
-      
+
+      const dayInstances = instances.filter((i) => new Date(i.dueDate).toDateString() === dateStr);
+      const hasCompliant = dayInstances.some((i) => i.status === 'compliant');
+      const hasDueSoon = dayInstances.some((i) => i.status === 'due_soon');
+      const hasOverdue = dayInstances.some((i) => i.status === 'overdue');
+
       days.push(
         <button
           key={`day-${d}`}
           onClick={() => setSelectedDate(isSelected ? null : date)}
-          className={`h-14 sm:h-20 flex flex-col items-center justify-start p-1.5 sm:p-2 border rounded-xl transition-all relative overflow-hidden group ${
-            isSelected 
-              ? 'bg-brand-navy border-brand-navy shadow-soft-flat text-on-dark' 
-              : isToday 
-                ? 'bg-brand-blue-light/30 border-brand-blue/30 text-brand-navy hover:bg-surface-soft hover:border-brand-blue/50' 
-                : 'bg-surface-white border-hairline hover:bg-surface-soft hover:border-neutral-300'
+          className={`min-h-[90px] sm:min-h-[110px] flex flex-col justify-between p-2.5 rounded-2xl border transition-all text-left relative overflow-hidden group ${
+            isSelected
+              ? 'bg-[#123A73] border-[#123A73] text-white shadow-md ring-2 ring-[#123A73]/30 scale-[1.01]'
+              : isToday
+              ? 'bg-orange-50/60 border-[#ef4d23] text-neutral-900 shadow-sm'
+              : 'bg-white border-neutral-200/80 hover:bg-neutral-50/80 hover:border-neutral-300'
           }`}
         >
-          <span className={`text-[12px] sm:text-body-sm font-semibold mb-1 ${isSelected ? 'text-on-dark' : 'text-ink'}`}>
-            {d}
-          </span>
-          
-          <div className="flex gap-1">
-             {hasCompliant && <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-status-success shadow-[0_0_4px_rgba(22,163,74,0.4)]" />}
-             {hasDueSoon && <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-status-warning shadow-[0_0_4px_rgba(234,179,8,0.4)]" />}
-             {hasOverdue && <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-status-danger shadow-[0_0_4px_rgba(220,38,38,0.4)]" />}
+          {/* Day Number Header */}
+          <div className="flex items-center justify-between w-full">
+            <span
+              className={`text-caption sm:text-body-sm font-bold w-6 h-6 flex items-center justify-center rounded-full ${
+                isSelected
+                  ? 'bg-white text-[#123A73]'
+                  : isToday
+                  ? 'bg-[#ef4d23] text-white'
+                  : 'text-neutral-700 group-hover:text-neutral-900'
+              }`}
+            >
+              {d}
+            </span>
+
+            {dayInstances.length > 0 && (
+              <span
+                className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                  isSelected
+                    ? 'bg-white/20 text-white'
+                    : hasOverdue
+                    ? 'bg-red-100 text-red-700'
+                    : hasDueSoon
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-emerald-100 text-emerald-800'
+                }`}
+              >
+                {dayInstances.length} {isHi ? 'नियत' : 'due'}
+              </span>
+            )}
+          </div>
+
+          {/* Event Pills list for Desktop */}
+          <div className="w-full space-y-1 my-1">
+            {dayInstances.slice(0, 2).map((inst) => (
+              <div
+                key={inst.id}
+                className={`truncate text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-md ${
+                  isSelected
+                    ? 'bg-white/15 text-white'
+                    : inst.status === 'overdue'
+                    ? 'bg-red-50 text-red-700 border border-red-200/60'
+                    : inst.status === 'due_soon'
+                    ? 'bg-amber-50 text-amber-800 border border-amber-200/60'
+                    : 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
+                }`}
+              >
+                {inst.requirement?.title?.slice(0, 18) || 'Statutory Return'}
+              </div>
+            ))}
+            {dayInstances.length > 2 && (
+              <span className={`text-[9px] font-bold block ${isSelected ? 'text-white/80' : 'text-neutral-400'}`}>
+                +{dayInstances.length - 2} more
+              </span>
+            )}
+          </div>
+
+          {/* Colored Status Indicator Dots */}
+          <div className="flex items-center gap-1.5 pt-0.5">
+            {hasCompliant && <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-xs" />}
+            {hasDueSoon && <div className="w-2 h-2 rounded-full bg-amber-500 shadow-xs animate-pulse" />}
+            {hasOverdue && <div className="w-2 h-2 rounded-full bg-red-500 shadow-xs" />}
           </div>
         </button>
       );
     }
-    
+
     return (
-      <div className="bg-surface-white rounded-xl border border-hairline p-4 sm:p-6 shadow-soft-flat">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <h2 className="text-title-sm sm:text-title font-semibold text-ink">
+      <div className="bg-white rounded-3xl border border-neutral-200/80 p-5 sm:p-8 shadow-sm space-y-5">
+        {/* Calendar Control Bar */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-neutral-100 pb-4">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-neutral-900">
               {monthNames[month]} {year}
             </h2>
-            <button 
+            <button
               onClick={handleToday}
-              className="px-3 py-1 rounded-pill bg-surface-soft text-caption font-medium text-neutral-600 hover:text-ink hover:bg-surface-faint transition-colors border border-hairline"
+              className="px-3 py-1 rounded-full bg-neutral-100 hover:bg-neutral-200 text-caption font-bold text-neutral-700 transition-colors"
             >
               {t('today')}
             </button>
+            {selectedDate && (
+              <button
+                onClick={() => setSelectedDate(null)}
+                className="text-caption font-semibold text-[#ef4d23] hover:underline"
+              >
+                {isHi ? 'फ़िल्टर हटाएं' : 'Clear Date Filter'}
+              </button>
+            )}
           </div>
-          
+
           <div className="flex items-center gap-2">
-            <button onClick={handlePrevMonth} className="p-1.5 rounded-lg border border-hairline hover:bg-surface-soft text-neutral-600 hover:text-ink transition-colors" aria-label={t('prevMonth')}>
+            <button
+              onClick={handlePrevMonth}
+              className="p-2 rounded-xl border border-neutral-200 hover:bg-neutral-50 text-neutral-600 hover:text-neutral-900 transition-colors"
+              aria-label={t('prevMonth')}
+            >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <button onClick={handleNextMonth} className="p-1.5 rounded-lg border border-hairline hover:bg-surface-soft text-neutral-600 hover:text-ink transition-colors" aria-label={t('nextMonth')}>
+            <button
+              onClick={handleNextMonth}
+              className="p-2 rounded-xl border border-neutral-200 hover:bg-neutral-50 text-neutral-600 hover:text-neutral-900 transition-colors"
+              aria-label={t('nextMonth')}
+            >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
-        
-        <div className="grid grid-cols-7 gap-2 sm:gap-3 mb-2">
-          {dayNames.map(day => (
-            <div key={day} className="text-center text-caption font-semibold text-neutral-500 uppercase tracking-wider">
+
+        {/* Weekday Names Header */}
+        <div className="grid grid-cols-7 gap-2 sm:gap-3 text-center">
+          {dayNames.map((day) => (
+            <div key={day} className="text-caption font-bold text-neutral-400 uppercase tracking-wider py-1">
               {day}
             </div>
           ))}
         </div>
-        
-        <div className="grid grid-cols-7 gap-2 sm:gap-3">
-          {days}
-        </div>
+
+        {/* 7-Column Day Cards Grid */}
+        <div className="grid grid-cols-7 gap-2 sm:gap-3">{days}</div>
       </div>
     );
   };
@@ -317,31 +408,43 @@ export default function ComplianceCalendarPage() {
         <div className="flex items-center gap-6">
           <Link href="/dashboard" className="flex items-center space-x-2.5">
             <SaarthiLogo className="w-8 h-8" />
-            <span className="text-title-sm text-ink font-semibold">{tCommon('appName')}</span>
+            <span className="text-title-sm text-ink font-bold">{tCommon('appName')}</span>
           </Link>
 
           <nav className="hidden md:flex items-center space-x-1">
             <Link
               href="/dashboard"
-              className="px-3 py-1.5 rounded-md text-body-sm font-medium text-neutral-600 hover:text-ink hover:bg-surface-faint transition-colors"
+              className="px-3 py-1.5 rounded-lg text-body-sm font-medium text-neutral-600 hover:text-ink hover:bg-surface-faint transition-colors"
             >
               {tNav('dashboard')}
             </Link>
             <Link
               href="/compliance"
-              className="px-3 py-1.5 rounded-md text-body-sm font-semibold text-brand-navy bg-brand-blue-light/50 transition-colors"
+              className="px-3 py-1.5 rounded-lg text-body-sm font-bold text-brand-navy bg-brand-blue-light/50 transition-colors"
             >
               {tNav('compliance')}
             </Link>
             <Link
+              href="/licenses"
+              className="px-3 py-1.5 rounded-lg text-body-sm font-medium text-neutral-600 hover:text-ink hover:bg-surface-faint transition-colors"
+            >
+              {isHi ? 'लाइसेंस एवं NSWS' : 'Licenses & NSWS'}
+            </Link>
+            <Link
               href="/notices"
-              className="px-3 py-1.5 rounded-md text-body-sm font-medium text-neutral-600 hover:text-ink hover:bg-surface-faint transition-colors"
+              className="px-3 py-1.5 rounded-lg text-body-sm font-medium text-neutral-600 hover:text-ink hover:bg-surface-faint transition-colors"
             >
               {tNav('notices')}
             </Link>
             <Link
+              href="/schemes"
+              className="px-3 py-1.5 rounded-lg text-body-sm font-medium text-neutral-600 hover:text-ink hover:bg-surface-faint transition-colors"
+            >
+              {tNav('schemes')}
+            </Link>
+            <Link
               href="/score"
-              className="px-3 py-1.5 rounded-md text-body-sm font-medium text-neutral-600 hover:text-ink hover:bg-surface-faint transition-colors"
+              className="px-3 py-1.5 rounded-lg text-body-sm font-medium text-neutral-600 hover:text-ink hover:bg-surface-faint transition-colors"
             >
               {tNav('score')}
             </Link>
@@ -352,7 +455,7 @@ export default function ComplianceCalendarPage() {
           <Link
             href="/compliance"
             locale={otherLocale}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-pill bg-surface-white text-caption font-medium text-ink hover:bg-surface-faint transition-colors border border-hairline"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-white text-caption font-semibold text-ink hover:bg-surface-faint transition-colors border border-hairline"
           >
             <Globe className="w-3.5 h-3.5 text-brand-navy" />
             <span>{otherLocale === 'hi' ? 'हिंदी' : 'English'}</span>
@@ -360,167 +463,198 @@ export default function ComplianceCalendarPage() {
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-8 py-8 space-y-6">
-        {/* Title & Action Header */}
+      {/* Main Container */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-8 py-8 space-y-8 text-left relative z-10">
+        {/* Header Title & Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5">
-              <Calendar className="w-6 h-6 text-brand-navy" />
-              <h1 className="text-title-lg font-semibold text-ink">{t('title')}</h1>
+              <CalendarDays className="w-7 h-7 text-[#ef4d23]" />
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900">{t('title')}</h1>
             </div>
             <p className="text-body-sm text-neutral-500">{t('subtitle')}</p>
           </div>
 
-          <button
-            type="button"
-            onClick={handleGenerate}
-            disabled={generating}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-ink text-on-dark font-semibold text-button hover:bg-ink-pressed disabled:bg-neutral-300 transition-colors shrink-0 shadow-soft-flat"
-          >
-            <RefreshCw className={`w-4 h-4 ${generating ? 'animate-spin' : ''}`} />
-            <span>{generating ? t('generating') : t('generateButton')}</span>
-          </button>
+          <div className="flex items-center gap-3">
+            {/* View Mode Toggle Switcher */}
+            <div className="bg-neutral-200/70 p-1 rounded-2xl flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setViewMode('calendar')}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-caption font-bold transition-all ${
+                  viewMode === 'calendar'
+                    ? 'bg-white text-neutral-900 shadow-sm'
+                    : 'text-neutral-600 hover:text-neutral-900'
+                }`}
+              >
+                <LayoutGrid className="w-4 h-4" />
+                <span>{isHi ? 'कैलेंडर' : 'Month Grid'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('agenda')}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-caption font-bold transition-all ${
+                  viewMode === 'agenda'
+                    ? 'bg-white text-neutral-900 shadow-sm'
+                    : 'text-neutral-600 hover:text-neutral-900'
+                }`}
+              >
+                <ListFilter className="w-4 h-4" />
+                <span>{isHi ? 'समयरेखा' : 'Agenda View'}</span>
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGenerate}
+              disabled={generating}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#123A73] hover:bg-[#0e2d5a] text-white font-bold text-caption transition-all shadow-sm disabled:opacity-60 active:scale-[0.98]"
+            >
+              <RefreshCw className={`w-4 h-4 ${generating ? 'animate-spin' : ''}`} />
+              <span>{generating ? t('generating') : t('generateButton')}</span>
+            </button>
+          </div>
         </div>
 
-        {/* Visual Calendar */}
-        {renderCalendar()}
+        {/* Quick Stats Metric Pills */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="bg-white rounded-2xl border border-neutral-200/80 p-4 shadow-sm space-y-1">
+            <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block">
+              {isHi ? 'कुल नियत अनुपालन' : 'Total Tracked'}
+            </span>
+            <span className="text-2xl font-extrabold text-neutral-900">{instances.length}</span>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-neutral-200/80 p-4 shadow-sm space-y-1">
+            <span className="text-[11px] font-semibold text-emerald-600 uppercase tracking-wider block">
+              {isHi ? 'समय पर पूर्ण' : 'Compliant'}
+            </span>
+            <span className="text-2xl font-extrabold text-emerald-600">{compliantCount}</span>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-neutral-200/80 p-4 shadow-sm space-y-1">
+            <span className="text-[11px] font-semibold text-amber-600 uppercase tracking-wider block">
+              {isHi ? 'शीघ्र देय' : 'Due Soon (7 Days)'}
+            </span>
+            <span className="text-2xl font-extrabold text-amber-600">{dueSoonCount}</span>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-neutral-200/80 p-4 shadow-sm space-y-1">
+            <span className="text-[11px] font-semibold text-red-600 uppercase tracking-wider block">
+              {isHi ? 'विलंबित / जोखिम' : 'Overdue Deadlines'}
+            </span>
+            <span className="text-2xl font-extrabold text-red-600">{overdueCount}</span>
+          </div>
+        </div>
+
+        {/* Calendar View Component */}
+        {viewMode === 'calendar' && renderShadcnCalendar()}
 
         {/* Filter Controls Bar */}
-        <div className="bg-surface-white rounded-xl border border-hairline p-4 space-y-3.5 shadow-soft-flat">
+        <div className="bg-white rounded-3xl border border-neutral-200/80 p-5 space-y-4 shadow-sm">
           {/* Status Filter Pills */}
-          <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-hairline">
+          <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-neutral-100">
             <button
               onClick={() => setSelectedStatus('ALL')}
-              className={`px-3.5 py-1.5 rounded-pill text-caption font-semibold transition-colors ${
+              className={`px-3.5 py-1.5 rounded-xl text-caption font-bold transition-all ${
                 selectedStatus === 'ALL'
-                  ? 'bg-ink text-on-dark'
-                  : 'bg-surface-soft text-neutral-600 hover:bg-surface-faint'
+                  ? 'bg-[#123A73] text-white shadow-sm'
+                  : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
               }`}
             >
               {t('allFilter')} ({instances.length})
             </button>
             <button
               onClick={() => setSelectedStatus('DUE_SOON')}
-              className={`px-3.5 py-1.5 rounded-pill text-caption font-semibold transition-colors ${
+              className={`px-3.5 py-1.5 rounded-xl text-caption font-bold transition-all ${
                 selectedStatus === 'DUE_SOON'
-                  ? 'bg-status-warning-bg text-status-warning border border-status-warning/30'
-                  : 'bg-surface-soft text-neutral-600 hover:bg-surface-faint'
+                  ? 'bg-amber-500 text-white shadow-sm'
+                  : 'bg-amber-50 text-amber-800 border border-amber-200/60 hover:bg-amber-100'
               }`}
             >
-              {t('dueSoonFilter')} ({instances.filter((i) => i.status === 'due_soon').length})
+              {t('dueSoonFilter')} ({dueSoonCount})
             </button>
             <button
               onClick={() => setSelectedStatus('OVERDUE')}
-              className={`px-3.5 py-1.5 rounded-pill text-caption font-semibold transition-colors ${
+              className={`px-3.5 py-1.5 rounded-xl text-caption font-bold transition-all ${
                 selectedStatus === 'OVERDUE'
-                  ? 'bg-status-danger-bg text-status-danger border border-status-danger/30'
-                  : 'bg-surface-soft text-neutral-600 hover:bg-surface-faint'
+                  ? 'bg-red-600 text-white shadow-sm'
+                  : 'bg-red-50 text-red-700 border border-red-200/60 hover:bg-red-100'
               }`}
             >
-              {t('overdueFilter')} ({instances.filter((i) => i.status === 'overdue').length})
+              {t('overdueFilter')} ({overdueCount})
             </button>
             <button
               onClick={() => setSelectedStatus('COMPLIANT')}
-              className={`px-3.5 py-1.5 rounded-pill text-caption font-semibold transition-colors ${
+              className={`px-3.5 py-1.5 rounded-xl text-caption font-bold transition-all ${
                 selectedStatus === 'COMPLIANT'
-                  ? 'bg-status-success-bg text-status-success border border-status-success/30'
-                  : 'bg-surface-soft text-neutral-600 hover:bg-surface-faint'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-emerald-50 text-emerald-800 border border-emerald-200/60 hover:bg-emerald-100'
               }`}
             >
-              {t('compliantFilter')} ({instances.filter((i) => i.status === 'compliant').length})
+              {t('compliantFilter')} ({compliantCount})
             </button>
           </div>
 
-          {/* Category Tabs & Search */}
+          {/* Category Tabs & Instant Search */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-1.5 text-caption">
-              <button
-                onClick={() => setSelectedCategory('ALL')}
-                className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
-                  selectedCategory === 'ALL'
-                    ? 'bg-brand-navy text-on-dark'
-                    : 'text-neutral-600 hover:bg-surface-faint'
-                }`}
-              >
-                {t('categoryAll')}
-              </button>
-              <button
-                onClick={() => setSelectedCategory('taxation')}
-                className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
-                  selectedCategory === 'taxation'
-                    ? 'bg-brand-navy text-on-dark'
-                    : 'text-neutral-600 hover:bg-surface-faint'
-                }`}
-              >
-                {t('categoryTaxation')}
-              </button>
-              <button
-                onClick={() => setSelectedCategory('labor_and_employment')}
-                className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
-                  selectedCategory === 'labor_and_employment'
-                    ? 'bg-brand-navy text-on-dark'
-                    : 'text-neutral-600 hover:bg-surface-faint'
-                }`}
-              >
-                {t('categoryLabor')}
-              </button>
-              <button
-                onClick={() => setSelectedCategory('industry_specific')}
-                className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
-                  selectedCategory === 'industry_specific'
-                    ? 'bg-brand-navy text-on-dark'
-                    : 'text-neutral-600 hover:bg-surface-faint'
-                }`}
-              >
-                {t('categoryIndustry')}
-              </button>
-              <button
-                onClick={() => setSelectedCategory('corporate_and_msme')}
-                className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
-                  selectedCategory === 'corporate_and_msme'
-                    ? 'bg-brand-navy text-on-dark'
-                    : 'text-neutral-600 hover:bg-surface-faint'
-                }`}
-              >
-                {t('categoryCorporate')}
-              </button>
+            <div className="flex flex-wrap items-center gap-2 text-caption">
+              {[
+                { id: 'ALL', label: t('categoryAll') },
+                { id: 'taxation', label: isHi ? 'कर व जीएसटी' : 'Taxation & GST' },
+                { id: 'labor_and_employment', label: isHi ? 'श्रम एवं ईपीएफ' : 'Labour & EPF/ESI' },
+                { id: 'industry_specific', label: isHi ? 'उद्योग / FSSAI' : 'Industry & FSSAI' },
+                { id: 'corporate_and_msme', label: isHi ? 'कॉर्पोरेट व MSME' : 'MSME & Corporate' },
+                { id: 'environmental', label: isHi ? 'पर्यावरण (UPPCB)' : 'Pollution (UPPCB)' },
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`px-3 py-1.5 rounded-xl font-semibold transition-all ${
+                    selectedCategory === cat.id
+                      ? 'bg-neutral-900 text-white shadow-xs'
+                      : 'text-neutral-600 bg-neutral-100 hover:bg-neutral-200'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
             </div>
 
-            <div className="relative w-full sm:w-64">
-              <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <div className="relative w-full sm:w-72">
+              <Search className="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={tCommon('search')}
-                className="w-full pl-9 pr-3.5 py-1.5 rounded-md bg-surface-white border border-hairline text-caption text-ink placeholder:text-neutral-400 focus:outline-none focus:border-brand-blue"
+                className="w-full pl-9 pr-4 py-2 rounded-xl bg-neutral-50 border border-neutral-200 text-caption font-medium text-ink placeholder:text-neutral-400 focus:outline-none focus:border-[#ef4d23] focus:bg-white transition-all"
               />
             </div>
           </div>
         </div>
 
-        {/* Loading State */}
+        {/* Loading Indicator */}
         {loading && (
-          <div className="p-12 text-center bg-surface-white rounded-xl border border-hairline space-y-3">
-            <Loader2 className="w-8 h-8 animate-spin text-brand-navy mx-auto" />
+          <div className="p-16 text-center bg-white rounded-3xl border border-neutral-200/80 space-y-3 shadow-sm">
+            <Loader2 className="w-8 h-8 animate-spin text-[#ef4d23] mx-auto" />
             <p className="text-body-sm text-neutral-500">{tCommon('loading')}</p>
           </div>
         )}
 
         {/* Empty State */}
         {!loading && filteredInstances.length === 0 && (
-          <div className="p-12 text-center bg-surface-white rounded-xl border border-hairline space-y-4">
-            <Calendar className="w-12 h-12 text-neutral-300 mx-auto" />
+          <div className="p-16 text-center bg-white rounded-3xl border border-neutral-200/80 space-y-4 shadow-sm">
+            <CalendarDays className="w-12 h-12 text-neutral-300 mx-auto" />
             <div className="space-y-1">
-              <h3 className="text-body font-semibold text-ink">{t('emptyStateTitle')}</h3>
+              <h3 className="text-body font-bold text-neutral-900">{t('emptyStateTitle')}</h3>
               <p className="text-body-sm text-neutral-500 max-w-md mx-auto">
                 {t('emptyStateSubtitle')}
               </p>
             </div>
             <button
               onClick={handleGenerate}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-ink text-on-dark font-semibold text-button hover:bg-ink-pressed"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#ef4d23] hover:bg-[#d83f17] text-white font-bold text-caption transition-all shadow-sm active:scale-[0.98]"
             >
               <RefreshCw className="w-4 h-4" />
               <span>{t('generateButton')}</span>
@@ -528,147 +662,161 @@ export default function ComplianceCalendarPage() {
           </div>
         )}
 
-        {/* Instances Grid / List View */}
+        {/* Active Filing Items List View */}
         {!loading && filteredInstances.length > 0 && (
-          <div className="space-y-3">
-            {filteredInstances.map((inst) => {
-              const req = inst.requirement;
-              const displayTitle =
-                locale === 'hi' && req?.titleHi ? req.titleHi : req?.title || 'Filing Requirement';
-              const displayDesc =
-                locale === 'hi' && req?.descriptionHi ? req.descriptionHi : req?.description;
-              const penalty =
-                locale === 'hi' && req?.penaltyDetailsHi
-                  ? req.penaltyDetailsHi
-                  : req?.penaltyDetails;
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-title-sm font-bold text-neutral-900">
+                {isHi ? 'वैधानिक अनुपालन सूची' : 'Statutory Compliance Deadlines'}
+              </h2>
+              <span className="text-caption font-mono text-neutral-400">
+                {filteredInstances.length} {isHi ? 'प्रविष्टियां' : 'Records'}
+              </span>
+            </div>
 
-              return (
-                <div
-                  key={inst.id}
-                  className="bg-surface-white rounded-xl border border-hairline p-5 shadow-soft-flat hover:shadow-soft-raised transition-all space-y-3.5"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                    <div className="space-y-1.5 max-w-3xl">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {getStatusBadge(inst.status)}
-                        <span className="px-2 py-0.5 rounded-pill bg-surface-faint text-neutral-600 text-caption font-mono uppercase">
-                          {req?.category}
-                        </span>
-                        {req?.jurisdictionState && (
-                          <span className="px-2 py-0.5 rounded-pill bg-status-info-bg text-brand-navy text-caption font-semibold">
-                            {req.jurisdictionState} State Act
+            <div className="grid grid-cols-1 gap-4">
+              {filteredInstances.map((inst) => {
+                const req = inst.requirement;
+                const displayTitle =
+                  locale === 'hi' && req?.titleHi ? req.titleHi : req?.title || 'Statutory Filing';
+                const displayDesc =
+                  locale === 'hi' && req?.descriptionHi ? req.descriptionHi : req?.description;
+                const penalty =
+                  locale === 'hi' && req?.penaltyDetailsHi
+                    ? req.penaltyDetailsHi
+                    : req?.penaltyDetails;
+
+                return (
+                  <div
+                    key={inst.id}
+                    className="bg-white rounded-3xl border border-neutral-200/80 p-5 sm:p-6 shadow-sm hover:shadow-md transition-all space-y-4"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                      <div className="space-y-2 max-w-3xl">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {getStatusBadge(inst.status)}
+                          <span className="px-2.5 py-0.5 rounded-md bg-neutral-100 text-neutral-700 text-[11px] font-bold uppercase tracking-wider">
+                            {req?.category}
                           </span>
-                        )}
+                          {req?.jurisdictionState && (
+                            <span className="px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-800 text-[11px] font-bold border border-blue-200/60">
+                              {req.jurisdictionState} State Act
+                            </span>
+                          )}
+                        </div>
+
+                        <h3 className="text-lg font-bold text-neutral-900 leading-snug">{displayTitle}</h3>
+                        <p className="text-caption text-neutral-600 line-clamp-2 leading-relaxed">
+                          {displayDesc}
+                        </p>
                       </div>
 
-                      <h3 className="text-body font-semibold text-ink">{displayTitle}</h3>
-                      <p className="text-caption text-neutral-600 line-clamp-2">{displayDesc}</p>
-                    </div>
-
-                    {/* Due Date Badge (Tabular Figures per DESIGN.md §4) */}
-                    <div className="text-left sm:text-right shrink-0">
-                      <div className="text-caption font-medium text-neutral-500 uppercase tracking-wider">
-                        {t('dueDate')}
-                      </div>
-                      <div className="text-body font-mono font-bold text-ink tracking-tight">
-                        {inst.dueDate}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Metadata Row: Governing Act & Penalty Risk */}
-                  <div className="pt-2 border-t border-hairline flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-caption">
-                    <div className="text-neutral-500">
-                      <span className="font-semibold text-ink">{t('act')}:</span> {req?.actName}
-                    </div>
-
-                    {penalty && (
-                      <div className="text-status-danger font-medium flex items-center gap-1.5">
-                        <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                        <span>
-                          <strong className="font-semibold">Penalty:</strong> {penalty}
+                      {/* Due Date Badge with Tabular Numbers */}
+                      <div className="text-left sm:text-right shrink-0 bg-[#fbfaf8] border border-neutral-200 rounded-2xl p-3.5 min-w-[140px]">
+                        <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block">
+                          {t('dueDate')}
+                        </span>
+                        <span className="text-base font-mono font-extrabold text-neutral-900 block mt-0.5">
+                          {inst.dueDate}
                         </span>
                       </div>
-                    )}
-                  </div>
+                    </div>
 
-                  {/* Actions & Filing Proof Details */}
-                  <div className="pt-2 border-t border-hairline flex items-center justify-between">
-                    {inst.status === 'compliant' && inst.filingRecord ? (
-                      <div className="inline-flex items-center gap-2 text-caption text-status-success font-medium">
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>
-                          {t('filedOn')} {inst.filingRecord.filedAt.slice(0, 10)}
-                        </span>
-                        {inst.filingRecord.acknowledgementNumber && (
-                          <span className="font-mono text-neutral-600">
-                            (Ref: {inst.filingRecord.acknowledgementNumber})
+                    {/* Metadata Row: Governing Act & Penalty Risk */}
+                    <div className="pt-3 border-t border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-caption">
+                      <div className="text-neutral-500 font-medium">
+                        <strong className="text-neutral-800">{t('act')}:</strong> {req?.actName}
+                      </div>
+
+                      {penalty && (
+                        <div className="p-2.5 rounded-xl bg-red-50/70 border border-red-200/60 text-red-800 font-medium flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                          <span className="text-[12px]">
+                            <strong className="font-bold">Penalty:</strong> {penalty}
                           </span>
-                        )}
-                      </div>
-                    ) : (
-                      <div />
-                    )}
+                        </div>
+                      )}
+                    </div>
 
-                    {inst.status !== 'compliant' && (
-                      <button
-                        type="button"
-                        onClick={() => setFilingInstance(inst)}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-ink text-on-dark font-semibold text-caption hover:bg-ink-pressed transition-colors"
-                      >
-                        <FileCheck className="w-3.5 h-3.5" />
-                        <span>{t('markAsFiled')}</span>
-                      </button>
-                    )}
+                    {/* Actions & Proof Details */}
+                    <div className="pt-3 border-t border-neutral-100 flex items-center justify-between">
+                      {inst.status === 'compliant' && inst.filingRecord ? (
+                        <div className="inline-flex items-center gap-2 text-caption text-emerald-700 font-bold bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          <span>
+                            {t('filedOn')} {inst.filingRecord.filedAt.slice(0, 10)}
+                          </span>
+                          {inst.filingRecord.acknowledgementNumber && (
+                            <span className="font-mono text-neutral-600">
+                              (ARN: {inst.filingRecord.acknowledgementNumber})
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <div />
+                      )}
+
+                      {inst.status !== 'compliant' && (
+                        <button
+                          type="button"
+                          onClick={() => setFilingInstance(inst)}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#ef4d23] hover:bg-[#d83f17] text-white font-bold text-caption transition-all shadow-md shadow-[#ef4d23]/20 active:scale-[0.98]"
+                        >
+                          <FileCheck className="w-4 h-4" />
+                          <span>{t('markAsFiled')}</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         )}
       </main>
 
-      {/* Record Filing Proof Modal / Drawer */}
+      {/* Record Filing Proof Modal Dialog */}
       {filingInstance && (
-        <div className="fixed inset-0 z-50 bg-ink/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-surface-white rounded-xl shadow-soft-raised border border-hairline p-6 space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-hairline">
-              <div className="space-y-0.5">
-                <h3 className="text-body font-semibold text-ink">{t('markAsFiled')}</h3>
-                <p className="text-caption text-neutral-500">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-neutral-200/80 p-6 sm:p-8 space-y-6">
+            <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+              <div className="space-y-1">
+                <h3 className="text-lg font-bold text-neutral-900">{t('markAsFiled')}</h3>
+                <p className="text-caption text-neutral-500 font-medium">
                   {filingInstance.requirement?.title}
                 </p>
               </div>
               <button
                 onClick={() => setFilingInstance(null)}
-                className="p-1 rounded-md text-neutral-400 hover:text-ink transition-colors"
+                className="p-1 rounded-xl text-neutral-400 hover:text-neutral-700 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {filingSuccess ? (
-              <div className="p-6 rounded-lg bg-status-success-bg border border-status-success/20 text-center space-y-2">
-                <CheckCircle2 className="w-10 h-10 text-status-success mx-auto" />
-                <p className="text-body font-semibold text-status-success">{t('filingSuccess')}</p>
+              <div className="p-8 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-2">
+                <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto" />
+                <p className="text-body font-bold text-emerald-800">{t('filingSuccess')}</p>
               </div>
             ) : (
               <form onSubmit={handleFilingSubmit} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="block text-body-sm font-medium text-ink">
-                    {t('ackNumber')}
+                <div className="space-y-1">
+                  <label className="block text-caption font-bold text-neutral-800">
+                    {t('ackNumber')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
+                    required
                     value={ackNumber}
                     onChange={(e) => setAckNumber(e.target.value)}
                     placeholder={t('ackPlaceholder')}
-                    className="w-full px-3.5 py-2 rounded-md bg-surface-white border border-hairline font-mono text-body-sm text-ink placeholder:font-sans placeholder:text-neutral-400 focus:outline-none focus:border-brand-blue"
+                    className="w-full px-4 py-2.5 rounded-xl bg-white border border-neutral-300 font-mono text-caption text-ink placeholder:font-sans placeholder:text-neutral-400 focus:outline-none focus:border-[#ef4d23]"
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="block text-body-sm font-medium text-ink">
+                <div className="space-y-1">
+                  <label className="block text-caption font-bold text-neutral-800">
                     {t('docUrl')}
                   </label>
                   <input
@@ -676,12 +824,12 @@ export default function ComplianceCalendarPage() {
                     value={docUrl}
                     onChange={(e) => setDocUrl(e.target.value)}
                     placeholder={t('docPlaceholder')}
-                    className="w-full px-3.5 py-2 rounded-md bg-surface-white border border-hairline font-mono text-body-sm text-ink placeholder:font-sans placeholder:text-neutral-400 focus:outline-none focus:border-brand-blue"
+                    className="w-full px-4 py-2.5 rounded-xl bg-white border border-neutral-300 font-mono text-caption text-ink placeholder:font-sans placeholder:text-neutral-400 focus:outline-none focus:border-[#ef4d23]"
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="block text-body-sm font-medium text-ink">
+                <div className="space-y-1">
+                  <label className="block text-caption font-bold text-neutral-800">
                     {t('notesLabel')}
                   </label>
                   <textarea
@@ -689,22 +837,22 @@ export default function ComplianceCalendarPage() {
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder={t('notesPlaceholder')}
-                    className="w-full px-3.5 py-2 rounded-md bg-surface-white border border-hairline text-body-sm text-ink placeholder:text-neutral-400 focus:outline-none focus:border-brand-blue"
+                    className="w-full px-4 py-2.5 rounded-xl bg-white border border-neutral-300 text-caption text-ink placeholder:text-neutral-400 focus:outline-none focus:border-[#ef4d23]"
                   />
                 </div>
 
-                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-hairline">
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-neutral-100">
                   <button
                     type="button"
                     onClick={() => setFilingInstance(null)}
-                    className="px-4 py-2 rounded-md border border-hairline text-caption font-medium text-ink hover:bg-surface-faint"
+                    className="px-4 py-2.5 rounded-xl border border-neutral-200 text-caption font-bold text-neutral-700 hover:bg-neutral-50"
                   >
                     {tCommon('cancel')}
                   </button>
                   <button
                     type="submit"
                     disabled={submittingFiling}
-                    className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-ink text-on-dark font-semibold text-button hover:bg-ink-pressed disabled:bg-neutral-300"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#ef4d23] hover:bg-[#d83f17] text-white font-bold text-caption disabled:opacity-60 transition-all shadow-md active:scale-[0.98]"
                   >
                     {submittingFiling && <Loader2 className="w-4 h-4 animate-spin" />}
                     <span>{t('submitFiling')}</span>
@@ -718,3 +866,4 @@ export default function ComplianceCalendarPage() {
     </div>
   );
 }
+

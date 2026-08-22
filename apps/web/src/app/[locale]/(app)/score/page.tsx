@@ -190,6 +190,12 @@ export default function ComplianceHealthScorePage() {
               {tNav('compliance')}
             </Link>
             <Link
+              href="/licenses"
+              className="px-3 py-1.5 rounded-lg font-medium text-neutral-600 hover:text-neutral-900 hover:bg-[#f5f2ee] transition-colors"
+            >
+              {isHi ? 'लाइसेंस एवं NSWS' : 'Licenses & NSWS'}
+            </Link>
+            <Link
               href="/notices"
               className="px-3 py-1.5 rounded-lg font-medium text-neutral-600 hover:text-neutral-900 hover:bg-[#f5f2ee] transition-colors"
             >
@@ -207,6 +213,7 @@ export default function ComplianceHealthScorePage() {
             >
               {tNav('score')}
             </Link>
+
           </nav>
         </div>
 
@@ -291,16 +298,22 @@ export default function ComplianceHealthScorePage() {
 
                 {/* Score Contribution Explainers */}
                 <div className="lg:col-span-7 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-6 space-y-4">
-                  <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                    <h3 className="text-[12px] uppercase font-bold text-neutral-400 tracking-wider">
-                      {isHi ? 'लाइव स्कोर योगदान' : 'Live Score Contributions'}
-                    </h3>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-[12px] uppercase font-bold text-neutral-400 tracking-wider">
+                        {isHi ? 'लाइव स्कोर योगदान' : 'Live Score Contributions'}
+                      </h3>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold border border-emerald-500/30">
+                        LightGBM ML Engine
+                      </span>
+                    </div>
                     <span className="text-[11px] font-mono text-[#ef4d23] font-semibold">
-                      {isHi ? '100% ऑडिट सत्यापित' : '100% Audit Verified'}
+                      {isHi ? '100% ऑडिट सत्यापित' : 'Calibrated 300–900 Scale'}
                     </span>
                   </div>
 
                   <div className="space-y-2.5 text-[12px] font-mono">
+
                     <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
                       <span className="text-neutral-200">
                         {isHi ? '✓ समय पर GSTR-3B एवं GSTR-1 फाइलिंग (12 चक्र)' : '✓ On-time GSTR-3B & GSTR-1 filings (12 cycles)'}

@@ -306,7 +306,9 @@ export default function NoticesHubPage() {
                     { name: 'GST_DRC01A_Discrepancy.pdf', label: isHi ? 'जीएसटी DRC-01A' : 'GST DRC-01A' },
                     { name: 'IT_Section_148A_Notice.pdf', label: isHi ? 'आयकर धारा 148A' : 'IT Sec 148A' },
                     { name: 'UP_Labour_Inspectorate_SCN.pdf', label: isHi ? 'UP श्रम नोटिस SCN' : 'UP Labour SCN' },
+                    { name: 'UP_Pollution_Control_SCN.pdf', label: isHi ? 'UP प्रदूषण CTO SCN' : 'UP Pollution SCN' },
                   ].map((sample) => (
+
                     <button
                       key={sample.name}
                       type="button"

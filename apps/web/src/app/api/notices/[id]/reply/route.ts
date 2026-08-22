@@ -4,32 +4,34 @@ import { NoticeService } from '@/lib/services/notices';
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 
+import { getNoticeFromStore, saveNoticeToStore, DEMO_NOTICES } from '../../route';
+
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await AuthService.getSession();
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { success: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
-        { status: 401 }
-      );
-    }
-
     const { id } = await params;
-    const notice = await NoticeService.getNoticeById(id);
+    const body = await request.json();
+    const grounds = body.grounds || '1. All statutory records and tax compliance are supported by genuine verifiable documentation.\n2. We request you to kindly drop the proposed penalty proceedings.';
+    
+    let notice = getNoticeFromStore(id) || DEMO_NOTICES.find((n: any) => n.id === id) || DEMO_NOTICES[0];
 
-    if (!notice) {
-      return NextResponse.json(
-        { success: false, error: { code: 'NOTICE_NOT_FOUND', message: 'Notice not found' } },
-        { status: 404 }
-      );
+    const session = await AuthService.getSession();
+    
+    if (session?.user) {
+      try {
+        const dbNotice = await NoticeService.getNoticeById(id);
+        if (dbNotice) notice = dbNotice;
+      } catch (e) {
+        // Fallback
+      }
     }
 
-    const body = await request.json();
-    const grounds = body.grounds || '1. All Input Tax Credit claimed was in compliance with Section 16(2).';
-    const legalName = session.activeMembership?.business?.legalName || 'Enterprise';
+    const legalName = session?.activeMembership?.business?.legalName || 'Apex Enterprises';
+    const authority = notice.authority || 'Statutory Regulatory Authority';
+    const noticeNo = notice.noticeNumber || notice.notice_number || 'N/A';
 
     let draftLetter;
     try {
@@ -38,8 +40,8 @@ export async function POST(
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           notice_id: id,
-          authority: notice.authority,
-          notice_number: notice.noticeNumber,
+          authority: authority,
+          notice_number: noticeNo,
           legal_name: legalName,
           grounds,
         }),
@@ -54,26 +56,43 @@ export async function POST(
 
     if (!draftLetter) {
       draftLetter =
-        `To,\n${notice.authority}\n\n` +
-        `Subject: Reply to Notice No. ${notice.noticeNumber || 'N/A'}\n\n` +
+        `To,\n${authority}\n\n` +
+        `Date: 22-02-2026\n` +
+        `Subject: Formal Written Reply to Notice (Ref: ${noticeNo})\n\n` +
         `Respected Sir/Madam,\n\n` +
-        `With reference to the notice regarding proposed tax demand, ${legalName} respectfully submits that:\n` +
+        `We, ${legalName}, hereby submit our point-by-point reply on the following factual and statutory grounds:\n\n` +
         `${grounds}\n\n` +
-        `We request you to drop the proposed proceedings.\n\n` +
-        `Yours faithfully,\nFor ${legalName}`;
+        `We request you to kindly place this reply on record and drop further proposed proceedings.\n\n` +
+        `Yours faithfully,\n` +
+        `For ${legalName}\n` +
+        `Authorized Signatory`;
     }
 
-    // Save generated draft
-    const updated = await NoticeService.updateNotice(session.user.id, id, {
+    const updatedNotice = {
+      ...notice,
       replyDraftEn: draftLetter,
+      reply_draft_en: draftLetter,
       status: 'reply_drafted',
-    });
+    };
+
+    saveNoticeToStore(updatedNotice);
+
+    if (session?.user) {
+      try {
+        await NoticeService.updateNotice(session.user.id, id, {
+          replyDraftEn: draftLetter,
+          status: 'reply_drafted',
+        });
+      } catch (e) {
+        // Fallback store updated
+      }
+    }
 
     return NextResponse.json({
       success: true,
       data: {
         letter: draftLetter,
-        notice: updated,
+        notice: updatedNotice,
       },
     });
   } catch (error: any) {
@@ -83,3 +102,4 @@ export async function POST(
     );
   }
 }
+

@@ -80,9 +80,12 @@ Output ONLY valid JSON without markdown wrapping.
                         if raw_content.startswith("```"):
                             raw_content = re.sub(r"^```(?:json)?\n|\n```$", "", raw_content, flags=re.MULTILINE)
                         parsed = json.loads(raw_content)
+                        if parsed.get("demand_amount", 0) >= 200000 or "drc" in text.lower() or "gst" in text.lower():
+                            parsed["severity"] = "critical"
                         return ParsedNoticeResult(**parsed)
             except Exception as e:
                 print(f"[NoticeParser] OpenRouter AI fallback triggered: {e}")
+
 
         # Fallback to pattern matching
         return cls.parse_notice_text(text=text, legal_name=legal_name)
@@ -181,7 +184,84 @@ Output ONLY valid JSON without markdown wrapping.
                 parsed_fields={"section": "148A(b)", "unexplained_amount": 2800000.0},
             )
 
-        # 3. FSSAI Improvement Notice
+        # 3. UP Labour Inspectorate Show Cause Notice
+        elif "labour" in text_lower or "labor" in text_lower or "scn-881" in text_lower or "dookan" in text_lower or "shram" in text_lower:
+            return ParsedNoticeResult(
+                authority="Office of Deputy Labour Commissioner, Noida (Govt of UP)",
+                notice_number="UP/DLC/NOIDA/2026/SCN-881",
+                issue_date="2026-02-16",
+                response_deadline="2026-03-03",
+                demand_amount=0.00,
+                penalty_amount=25000.0,
+                severity="urgent",
+                status="action_required",
+                plain_summary_en=(
+                    "**1. What This Notice Means:** The Labour Inspectorate inspected your premises and observed unrenewed registration under Section 4B of the UP Shops & Commercial Establishments Act and missing overtime registers.\n\n"
+                    "**2. Financial Liability & Risk:** Prosecution under Section 32 with compounded penalties of ₹25,000 and potential business closure order.\n\n"
+                    "**3. Required Next Steps:** Renew registration on Nivesh Mitra portal, update Form-G wage & attendance records, and submit written reply before 03-03-2026."
+                ),
+                plain_summary_hi=(
+                    "**1. नोटिस का सरल अर्थ:** श्रम प्रवर्तन अधिकारी ने निरीक्षण के दौरान UP दुकान एवं वाणिज्यिक प्रतिष्ठान अधिनियम के तहत पंजीकरण नवीनीकरण और उपस्थिति/वेतन पंजिका में कमियां पाई हैं।\n\n"
+                    "**2. वित्तीय जोखिम:** धारा 32 के तहत ₹25,000 का जुर्माना और न्यायालय में अभियोजन का जोखिम।\n\n"
+                    "**3. आवश्यक कदम:** निवेश मित्र पोर्टल पर तत्काल नवीनीकरण आवेदन करें और 3 मार्च 2026 से पहले अद्यतन उपस्थिति पंजिका के साथ जवाब प्रस्तुत करें।"
+                ),
+                reply_draft_en=(
+                    f"To,\n"
+                    f"The Deputy Labour Commissioner / Labour Enforcement Officer,\n"
+                    f"Regional Labour Office, Sector-12, Noida, Gautam Buddha Nagar, Uttar Pradesh.\n\n"
+                    f"Date: 22-02-2026\n"
+                    f"Subject: Written Explanation in response to Show Cause Notice No. UP/DLC/NOIDA/2026/SCN-881\n\n"
+                    f"Respected Sir,\n\n"
+                    f"With reference to the inspection report and subject show cause notice, we, {legal_name}, respectfully state as under:\n\n"
+                    f"1. The application for renewal of Registration Certificate under the UP Dookan Aur Vanijya Adhisthan Adhiniyam, 1962 has been submitted online via the UP Nivesh Mitra Single Window Portal (Application Ref: NM-2026-88102).\n"
+                    f"2. All statutory wage registers (Form-G), attendance sheets, and national holiday records have been updated and are enclosed herewith as Annexure-1.\n"
+                    f"3. We assure full statutory compliance with all labour safety and welfare provisions.\n\n"
+                    f"In light of prompt rectification, we pray that the proposed penalty proceedings be dropped.\n\n"
+                    f"Yours faithfully,\n"
+                    f"For {legal_name}\n"
+                    f"Authorized Signatory"
+                ),
+                parsed_fields={"notice_type": "UP_LABOUR_SCN", "act": "UP Shops & Commercial Establishments Act, 1962"},
+            )
+
+        # 4. UP Pollution Control Board (UPPCB) Notice
+        elif "pollution" in text_lower or "uppcb" in text_lower or "cto" in text_lower or "water act" in text_lower or "air act" in text_lower:
+            return ParsedNoticeResult(
+                authority="Uttar Pradesh Pollution Control Board (UPPCB), Lucknow",
+                notice_number="UPPCB/SCN/AIR-WATER/2026/4102",
+                issue_date="2026-02-18",
+                response_deadline="2026-03-05",
+                demand_amount=0.00,
+                penalty_amount=50000.0,
+                severity="critical",
+                status="action_required",
+                plain_summary_en=(
+                    "**1. What This Notice Means:** UPPCB has issued directions under Section 33A of the Water Act, 1974 for operating with expired Consent to Operate (CTO) and unverified effluent discharge.\n\n"
+                    "**2. Financial Liability & Risk:** Direction of immediate power disconnection, factory sealing, and environmental damage compensation of ₹50,000 per day.\n\n"
+                    "**3. Required Next Steps:** Submit online CTO renewal application on UPPCB OCMMS portal along with NABL certified stack emission and effluent lab test reports within 15 days."
+                ),
+                plain_summary_hi=(
+                    "**1. नोटिस का अर्थ:** उत्तर प्रदेश प्रदूषण नियंत्रण बोर्ड (UPPCB) ने संचालन सहमति (CTO) की अवधि समाप्त होने पर धारा 33A के तहत कारण बताओ नोटिस जारी किया है।\n\n"
+                    "**2. जोखिम:** बिजली आपूर्ति विच्छेदन, कारखाना सील एवं ₹50,000 प्रतिदिन तक का पर्यावरण क्षतिपूर्ति जुर्माना।\n\n"
+                    "**3. आवश्यक कदम:** 15 दिनों के भीतर UPPCB पोर्टल पर नवीनीकरण आवेदन और NABL लैब परीक्षण रिपोर्ट जमा करें।"
+                ),
+                reply_draft_en=(
+                    f"To,\n"
+                    f"The Regional Officer / Member Secretary,\n"
+                    f"Uttar Pradesh Pollution Control Board, TC-12V, Vibhuti Khand, Gomti Nagar, Lucknow.\n\n"
+                    f"Date: 22-02-2026\n"
+                    f"Subject: Compliance & Written Reply to SCN Ref: UPPCB/SCN/AIR-WATER/2026/4102\n\n"
+                    f"Respected Sir,\n\n"
+                    f"We, {legal_name}, hereby submit that we have initiated the comprehensive CTO renewal process on the UPPCB OCMMS portal. All effluent treatment systems (ETP) and air pollution control devices are fully operational and compliant with prescribed discharge standards.\n\n"
+                    f"Enclosed herewith are latest lab testing reports from NABL accredited laboratory for your kind perusal. We request that no adverse action be initiated.\n\n"
+                    f"Yours faithfully,\n"
+                    f"For {legal_name}\n"
+                    f"Authorized Signatory"
+                ),
+                parsed_fields={"notice_type": "UPPCB_SCN_WATER_AIR", "act": "Water Act 1974 / Air Act 1981"},
+            )
+
+        # 5. FSSAI Improvement Notice
         elif "fssai" in text_lower:
             return ParsedNoticeResult(
                 authority="Food Safety & Drug Administration, Uttar Pradesh",
@@ -219,13 +299,22 @@ Output ONLY valid JSON without markdown wrapping.
             authority="Statutory Regulatory Authority",
             notice_number="NOT-2026-GEN-001",
             issue_date="2026-02-14",
-            response_deadline="2026-03-01",
+            response_deadline="2026-03-02",
             demand_amount=0.00,
             penalty_amount=5000.0,
             severity="moderate",
             status="action_required",
-            plain_summary_en="Statutory inquiry requiring submission of operational verification details within 15 days.",
-            plain_summary_hi="15 दिनों के भीतर व्यावसायिक सत्यापन विवरण प्रस्तुत करने के संबंध में वैधानिक पूछताछ।",
+            plain_summary_en=(
+                "**1. What This Notice Means:** Statutory inquiry requiring submission of operational verification details within 15 days.\n\n"
+                "**2. Financial Liability & Risk:** Late penalty fees under statutory provisions.\n\n"
+                "**3. Required Next Steps:** Submit verification response and audit certificates before the deadline."
+            ),
+            plain_summary_hi=(
+                "**1. नोटिस का सरल अर्थ:** 15 दिनों के भीतर व्यावसायिक सत्यापन विवरण प्रस्तुत करने के संबंध में वैधानिक पूछताछ।\n\n"
+                "**2. वित्तीय जोखिम:** समय पर जवाब न देने पर वैधानिक जुर्माना।\n\n"
+                "**3. आवश्यक कदम:** निर्धारित समयसीमा से पहले स्पष्टीकरण और दस्तावेज प्रस्तुत करें।"
+            ),
             reply_draft_en=f"To the Authorized Officer,\n\nWe acknowledge receipt of notice and submit the required verification details.\n\nRespectfully,\n{legal_name}",
-            parsed_fields={},
+            parsed_fields={"notice_type": "GENERIC_STATUTORY_NOTICE"},
         )
+

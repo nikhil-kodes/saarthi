@@ -48,6 +48,31 @@ class OCRService:
                 "Demand & Penalty Risk: Reassessment with 50% penalty under Section 270A.\n"
                 "You are required to submit your explanation along with supporting books of account on or before 25-02-2026."
             )
+        elif "labour" in file_lower or "labor" in file_lower or "scn" in file_lower or "shram" in file_lower:
+            return (
+                "OFFICE OF THE DEPUTY LABOUR COMMISSIONER\n"
+                "GOVERNMENT OF UTTAR PRADESH, REGIONAL LABOUR OFFICE, NOIDA\n"
+                "Show Cause Notice under UP Dookan Aur Vanijya Adhisthan Adhiniyam, 1962\n"
+                "Notice No: UP/DLC/NOIDA/2026/SCN-881\n"
+                "Date: 16-02-2026\n"
+                "To: The Occupier / Manager, M/s Apex Enterprises, Sector-63, Noida\n"
+                "Subject: Irregularities observed in Employee Register Form-G, overtime wage records, and renewal of establishment registration.\n"
+                "Non-Compliance: Operating without renewed registration under Section 4B and non-maintenance of wage register.\n"
+                "Demand / Penal Provision: Prosecution under Section 32 with fine of ₹25,000 per violation.\n"
+                "You are directed to appear in person or through authorized representative with inspection registers on or before 03-03-2026."
+            )
+        elif "pollution" in file_lower or "uppcb" in file_lower or "cto" in file_lower or "env" in file_lower:
+            return (
+                "UTTAR PRADESH POLLUTION CONTROL BOARD (UPPCB)\n"
+                "Building TC-12V, Vibhuti Khand, Gomti Nagar, Lucknow - 226010\n"
+                "Show Cause Notice under Section 33A of Water (Prevention and Control of Pollution) Act, 1974\n"
+                "Notice Ref: UPPCB/SCN/AIR-WATER/2026/4102\n"
+                "Date: 18-02-2026\n"
+                "To: M/s Apex Precision Manufacturing, Industrial Area, Kanpur\n"
+                "Subject: Expired Consent to Operate (CTO) and discharge of untreated industrial effluent.\n"
+                "Directives: Closure of unit, power disconnection, and environmental compensation levy of ₹50,000.\n"
+                "You are required to submit renewal proof on Nivesh Mitra portal along with NABL accredited lab test report within 15 days (Deadline: 05-03-2026)."
+            )
         elif "fssai" in file_lower:
             return (
                 "FOOD SAFETY AND STANDARDS AUTHORITY OF INDIA\n"
@@ -65,5 +90,7 @@ class OCRService:
                 f"Reference: NOT-2026-GEN-001\n"
                 f"Date: 14-02-2026\n"
                 f"Document: {file_name}\n"
-                f"You are requested to submit your compliance confirmation within 15 days."
+                f"Issuing Body: Statutory Compliance & Regulatory Enforcement Division\n"
+                f"Directives: Submit verification reconciliation and statutory filing compliance report within 15 days (Deadline: 02-03-2026)."
             )
+
