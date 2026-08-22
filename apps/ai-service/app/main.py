@@ -7,6 +7,7 @@ from app.config import settings
 from app.routers.rag import router as rag_router
 from app.routers.ocr import router as ocr_router
 from app.routers.score import router as score_router
+from app.routers.chat import router as chat_router
 
 
 class HealthResponse(BaseModel):
@@ -44,6 +45,7 @@ app.add_middleware(
 app.include_router(rag_router)
 app.include_router(ocr_router)
 app.include_router(score_router)
+app.include_router(chat_router)
 
 
 @app.get("/health", response_model=HealthResponse, tags=["Health"])

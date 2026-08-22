@@ -24,11 +24,15 @@ class Settings(BaseSettings):
     r2_secret_access_key: Optional[str] = None
     r2_bucket_name: str = "saarthi-documents"
 
+    # OpenRouter
+    openrouter_api_key: str = ""
+    openrouter_model: str = "qwen/qwen3-30b-a3b-instruct-2507"
+    openrouter_vision_model: str = "qwen/qwen3-vl-30b-a3b-instruct"
+
     model_config = SettingsConfigDict(
         env_file=(".env", "../../.env"),
         env_file_encoding="utf-8",
         extra="ignore"
     )
-
 
 settings = Settings()

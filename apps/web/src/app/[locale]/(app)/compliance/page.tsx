@@ -18,11 +18,16 @@ import {
   Building2,
   ExternalLink,
   ChevronRight,
+  ChevronLeft,
   X,
   Upload,
   Globe,
   Loader2,
 } from 'lucide-react';
+import {
+  AmbientOrbs,
+  ArchitecturalGrid,
+} from '@/components/ui/ambient-background';
 import type {
   ComplianceCategory,
   ComplianceInstance,
@@ -45,6 +50,10 @@ export default function ComplianceCalendarPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Calendar State
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   // Filing Modal State
   const [filingInstance, setFilingInstance] = useState<ComplianceInstance | null>(null);
@@ -128,6 +137,14 @@ export default function ComplianceCalendarPage() {
   };
 
   const filteredInstances = instances.filter((inst) => {
+    // Date Filter
+    if (selectedDate) {
+      const instDate = new Date(inst.dueDate);
+      if (instDate.toDateString() !== selectedDate.toDateString()) {
+        return false;
+      }
+    }
+
     // Status Filter
     if (selectedStatus === 'DUE_SOON' && inst.status !== 'due_soon') return false;
     if (selectedStatus === 'OVERDUE' && inst.status !== 'overdue') return false;
@@ -182,10 +199,121 @@ export default function ComplianceCalendarPage() {
     }
   };
 
+  const monthNames = [
+    t('january'), t('february'), t('march'), t('april'), t('may'), t('june'),
+    t('july'), t('august'), t('september'), t('october'), t('november'), t('december')
+  ];
+
+  const dayNames = [t('sun'), t('mon'), t('tue'), t('wed'), t('thu'), t('fri'), t('sat')];
+
+  const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
+  const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
+
+  const handlePrevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  const handleNextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  const handleToday = () => {
+    setCurrentDate(new Date());
+    setSelectedDate(null);
+  };
+
+  const renderCalendar = () => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const daysInMonth = getDaysInMonth(year, month);
+    const firstDay = getFirstDayOfMonth(year, month);
+    
+    const days = [];
+    for (let i = 0; i < firstDay; i++) {
+      days.push(<div key={`empty-${i}`} className="h-14 sm:h-20 bg-surface-white/40 border border-hairline/50 rounded-xl" />);
+    }
+    
+    const todayStr = new Date().toDateString();
+    
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(year, month, d);
+      const dateStr = date.toDateString();
+      const isToday = dateStr === todayStr;
+      const isSelected = selectedDate?.toDateString() === dateStr;
+      
+      const dayInstances = instances.filter(i => new Date(i.dueDate).toDateString() === dateStr);
+      const hasCompliant = dayInstances.some(i => i.status === 'compliant');
+      const hasDueSoon = dayInstances.some(i => i.status === 'due_soon');
+      const hasOverdue = dayInstances.some(i => i.status === 'overdue');
+      
+      days.push(
+        <button
+          key={`day-${d}`}
+          onClick={() => setSelectedDate(isSelected ? null : date)}
+          className={`h-14 sm:h-20 flex flex-col items-center justify-start p-1.5 sm:p-2 border rounded-xl transition-all relative overflow-hidden group ${
+            isSelected 
+              ? 'bg-brand-navy border-brand-navy shadow-soft-flat text-on-dark' 
+              : isToday 
+                ? 'bg-brand-blue-light/30 border-brand-blue/30 text-brand-navy hover:bg-surface-soft hover:border-brand-blue/50' 
+                : 'bg-surface-white border-hairline hover:bg-surface-soft hover:border-neutral-300'
+          }`}
+        >
+          <span className={`text-[12px] sm:text-body-sm font-semibold mb-1 ${isSelected ? 'text-on-dark' : 'text-ink'}`}>
+            {d}
+          </span>
+          
+          <div className="flex gap-1">
+             {hasCompliant && <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-status-success shadow-[0_0_4px_rgba(22,163,74,0.4)]" />}
+             {hasDueSoon && <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-status-warning shadow-[0_0_4px_rgba(234,179,8,0.4)]" />}
+             {hasOverdue && <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-status-danger shadow-[0_0_4px_rgba(220,38,38,0.4)]" />}
+          </div>
+        </button>
+      );
+    }
+    
+    return (
+      <div className="bg-surface-white rounded-xl border border-hairline p-4 sm:p-6 shadow-soft-flat">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <h2 className="text-title-sm sm:text-title font-semibold text-ink">
+              {monthNames[month]} {year}
+            </h2>
+            <button 
+              onClick={handleToday}
+              className="px-3 py-1 rounded-pill bg-surface-soft text-caption font-medium text-neutral-600 hover:text-ink hover:bg-surface-faint transition-colors border border-hairline"
+            >
+              {t('today')}
+            </button>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <button onClick={handlePrevMonth} className="p-1.5 rounded-lg border border-hairline hover:bg-surface-soft text-neutral-600 hover:text-ink transition-colors" aria-label={t('prevMonth')}>
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button onClick={handleNextMonth} className="p-1.5 rounded-lg border border-hairline hover:bg-surface-soft text-neutral-600 hover:text-ink transition-colors" aria-label={t('nextMonth')}>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-7 gap-2 sm:gap-3 mb-2">
+          {dayNames.map(day => (
+            <div key={day} className="text-center text-caption font-semibold text-neutral-500 uppercase tracking-wider">
+              {day}
+            </div>
+          ))}
+        </div>
+        
+        <div className="grid grid-cols-7 gap-2 sm:gap-3">
+          {days}
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-canvas">
+    <div className="min-h-screen bg-[#f5f4f0] font-['Inter',sans-serif] selection:bg-[#ef4d23]/20 selection:text-[#ef4d23] relative overflow-hidden">
+      {/* Dynamic Ambient Background Layers */}
+      <AmbientOrbs theme="cool" intensity="subtle" />
+      <ArchitecturalGrid gridSize={32} />
+      <div className="pointer-events-none absolute inset-0 ambient-dot-grid opacity-50" aria-hidden="true" />
+
       {/* Top Application Header */}
-      <header className="sticky top-0 z-30 bg-surface-white border-b border-hairline px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-soft-flat">
+      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-neutral-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-sm relative">
         <div className="flex items-center gap-6">
           <Link href="/dashboard" className="flex items-center space-x-2.5">
             <SaarthiLogo className="w-8 h-8" />
@@ -254,6 +382,9 @@ export default function ComplianceCalendarPage() {
             <span>{generating ? t('generating') : t('generateButton')}</span>
           </button>
         </div>
+
+        {/* Visual Calendar */}
+        {renderCalendar()}
 
         {/* Filter Controls Bar */}
         <div className="bg-surface-white rounded-xl border border-hairline p-4 space-y-3.5 shadow-soft-flat">

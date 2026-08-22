@@ -23,6 +23,11 @@ import {
   ShieldCheck,
   AlertCircle,
 } from 'lucide-react';
+import {
+  AmbientOrbs,
+  ArchitecturalGrid,
+  SpecularHorizonBeam,
+} from '@/components/ui/ambient-background';
 
 export default function NoticesHubPage() {
   const t = useTranslations('notices');
@@ -38,7 +43,10 @@ export default function NoticesHubPage() {
   const [notices, setNotices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [selectedFileName, setSelectedFileName] = useState('GST_DRC01A_Notice.pdf');
+  const [selectedFileName, setSelectedFileName] = useState('GST_DRC01A_Discrepancy.pdf');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // WhatsApp simulation state
   const [waMessage, setWaMessage] = useState('');
@@ -64,25 +72,71 @@ export default function NoticesHubPage() {
     fetchNotices();
   }, []);
 
-  const handleSimulatedUpload = async () => {
+  const handleUploadNotice = async () => {
     try {
       setUploading(true);
+      setUploadError(null);
+
+      let finalFileName = selectedFileName;
+      let finalFileUrl = `https://storage.saarthi.app/notices/${selectedFileName}`;
+      let finalMimeType = 'application/pdf';
+      let finalSize = 245000;
+
+      // If user selected a real file, upload to R2 first
+      if (selectedFile) {
+        finalFileName = selectedFile.name;
+        finalMimeType = selectedFile.type || 'application/pdf';
+        finalSize = selectedFile.size;
+
+        // 1. Get presigned R2 upload URL
+        const presignRes = await fetch('/api/storage/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: selectedFile.name,
+            contentType: finalMimeType,
+            documentType: 'notice',
+            businessId: 'active-business',
+          }),
+        });
+        const presignJson = await presignRes.json();
+
+        if (presignJson.success && presignJson.data?.presignedUrl) {
+          // 2. Upload file directly to R2 bucket
+          await fetch(presignJson.data.presignedUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': finalMimeType },
+            body: selectedFile,
+          });
+          finalFileUrl = presignJson.data.fileUrl;
+        }
+      }
+
+      // 3. Register notice with AI OCR & Plain Language Explainer
       const res = await fetch('/api/notices', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          fileName: selectedFileName,
-          fileUrl: `https://storage.saarthi.app/notices/${selectedFileName}`,
-          mimeType: 'application/pdf',
-          fileSizeBytes: 245000,
+          fileName: finalFileName,
+          fileUrl: finalFileUrl,
+          mimeType: finalMimeType,
+          fileSizeBytes: finalSize,
         }),
       });
       const json = await res.json();
       if (json.success) {
+        setSelectedFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        if (json.data) {
+          setNotices((prev) => [json.data, ...prev.filter((n) => n.id !== json.data.id)]);
+        }
         await fetchNotices();
+      } else {
+        setUploadError(json.error?.message || 'Notice OCR processing failed');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Upload failed:', err);
+      setUploadError(err.message || 'Upload failed');
     } finally {
       setUploading(false);
     }
@@ -114,9 +168,14 @@ export default function NoticesHubPage() {
   };
 
   return (
-    <div className="min-h-screen bg-canvas">
-      {/* Header */}
-      <header className="sticky top-0 z-30 bg-surface-white/95 backdrop-blur-md border-b border-hairline px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-soft-flat">
+    <div className="min-h-screen bg-[#f5f4f0] font-['Inter',sans-serif] selection:bg-[#ef4d23]/20 selection:text-[#ef4d23] relative overflow-hidden">
+      {/* Dynamic Ambient Background Layer */}
+      <AmbientOrbs theme="warm" intensity="subtle" />
+      <ArchitecturalGrid gridSize={32} />
+      <div className="pointer-events-none absolute inset-0 ambient-dot-grid opacity-50" aria-hidden="true" />
+
+      {/* Topbar */}
+      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-neutral-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-sm relative">
         <div className="flex items-center gap-6">
           <Link href="/dashboard" className="flex items-center space-x-2.5 group">
             <SaarthiLogo className="w-8 h-8" />
@@ -197,57 +256,97 @@ export default function NoticesHubPage() {
               <p className="text-caption text-neutral-500">{t('uploadSubtitle')}</p>
             </div>
 
-            {/* Drag & Drop Visual Area */}
-            <div className="border-2 border-dashed border-hairline rounded-xl p-6 text-center space-y-3 bg-surface-soft hover:bg-surface-faint/60 transition-colors">
-              <div className="w-12 h-12 rounded-xl bg-brand-blue-light flex items-center justify-center text-brand-navy mx-auto shadow-sm">
+            {/* Drag & Drop Real File Upload Area */}
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="border-2 border-dashed border-neutral-300 hover:border-[#ef4d23] rounded-xl p-6 text-center space-y-3 bg-white/60 hover:bg-white transition-all cursor-pointer group"
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/pdf,image/png,image/jpeg,image/webp"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) setSelectedFile(f);
+                }}
+              />
+              <div className="w-12 h-12 rounded-xl bg-orange-50 group-hover:bg-orange-100 flex items-center justify-center text-[#ef4d23] mx-auto transition-colors">
                 <FileUp className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <span className="text-body-sm font-bold text-ink block">
-                  {isHi ? 'नोटिस फ़ाइल चुनें या अपलोड का अनुकरण करें' : 'Select or simulate notice upload'}
-                </span>
-                <p className="text-caption text-neutral-400">
-                  {isHi ? 'PDF, PNG, JPG स्कैन (अधिकतम 25MB)' : 'PDF, PNG, JPG scans up to 25MB'}
-                </p>
+                {selectedFile ? (
+                  <div className="space-y-1">
+                    <span className="text-body-sm font-bold text-ink block text-[#ef4d23]">
+                      ✓ {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+                    </span>
+                    <p className="text-caption text-neutral-500">
+                      {isHi ? 'फ़ाइल अपलोड करने के लिए नीचे बटन दबाएं' : 'Ready to analyze — click Analyze Notice below'}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <span className="text-body-sm font-bold text-ink block">
+                      {isHi ? 'नोटिस PDF या फ़ोटो यहाँ चुनें / छोड़ें' : 'Upload your statutory notice (PDF or Image)'}
+                    </span>
+                    <p className="text-caption text-neutral-400">
+                      {isHi ? 'Cloudflare R2 एवं Gemma AI द्वारा सुरक्षित विश्लेषण (अधिकतम 25MB)' : 'Direct R2 secure upload with Gemma AI OCR analysis (Max 25MB)'}
+                    </p>
+                  </>
+                )}
               </div>
 
-              {/* Sample Selector Buttons */}
-              <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-                {[
-                  { name: 'GST_DRC01A_Discrepancy.pdf', label: isHi ? 'जीएसटी DRC-01A' : 'GST DRC-01A' },
-                  { name: 'IT_Section_148A_Notice.pdf', label: isHi ? 'आयकर धारा 148A' : 'IT Sec 148A' },
-                  { name: 'UP_Labour_Inspectorate_SCN.pdf', label: isHi ? 'UP श्रम नोटिस SCN' : 'UP Labour SCN' },
-                ].map((sample) => (
-                  <button
-                    key={sample.name}
-                    type="button"
-                    onClick={() => setSelectedFileName(sample.name)}
-                    className={`px-3 py-1 rounded-lg text-caption font-semibold transition-all border ${
-                      selectedFileName === sample.name
-                        ? 'bg-ink text-on-dark border-ink shadow-sm'
-                        : 'bg-surface-white text-neutral-600 border-hairline hover:bg-surface-soft'
-                    }`}
-                  >
-                    {sample.label}
-                  </button>
-                ))}
+              {/* Sample Preset Selector */}
+              <div className="pt-3 border-t border-neutral-200/60" onClick={(e) => e.stopPropagation()}>
+                <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block mb-2">
+                  {isHi ? 'या नमूना नोटिस चुनें:' : 'Or test with a sample notice:'}
+                </span>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  {[
+                    { name: 'GST_DRC01A_Discrepancy.pdf', label: isHi ? 'जीएसटी DRC-01A' : 'GST DRC-01A' },
+                    { name: 'IT_Section_148A_Notice.pdf', label: isHi ? 'आयकर धारा 148A' : 'IT Sec 148A' },
+                    { name: 'UP_Labour_Inspectorate_SCN.pdf', label: isHi ? 'UP श्रम नोटिस SCN' : 'UP Labour SCN' },
+                  ].map((sample) => (
+                    <button
+                      key={sample.name}
+                      type="button"
+                      onClick={() => {
+                        setSelectedFile(null);
+                        setSelectedFileName(sample.name);
+                      }}
+                      className={`px-3 py-1 rounded-lg text-caption font-semibold transition-all border ${
+                        !selectedFile && selectedFileName === sample.name
+                          ? 'bg-[#123A73] text-white border-[#123A73] shadow-sm'
+                          : 'bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50'
+                      }`}
+                    >
+                      {sample.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
+            {uploadError && (
+              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-caption font-medium">
+                {uploadError}
+              </div>
+            )}
+
             <button
-              onClick={handleSimulatedUpload}
+              onClick={handleUploadNotice}
               disabled={uploading}
-              className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-ink text-on-dark font-bold text-button hover:bg-ink-pressed active:scale-[0.98] disabled:bg-neutral-300 transition-all shadow-soft-flat"
+              className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#ef4d23] hover:bg-[#d83f17] text-white font-bold text-button active:scale-[0.98] disabled:opacity-60 transition-all shadow-md shadow-[#ef4d23]/20"
             >
               {uploading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>{t('uploading')}</span>
+                  <span>{isHi ? 'R2 पर अपलोड एवं AI विश्लेषण जारी...' : 'Uploading to R2 & Analyzing Notice...'}</span>
                 </>
               ) : (
                 <>
                   <UploadCloud className="w-4 h-4" />
-                  <span>{t('uploadButton')}</span>
+                  <span>{isHi ? 'नोटिस का AI विश्लेषण करें (30 सेकंड)' : 'Analyze Statutory Notice (30-Sec AI)'}</span>
                 </>
               )}
             </button>

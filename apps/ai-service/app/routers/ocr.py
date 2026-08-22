@@ -32,7 +32,7 @@ async def parse_uploaded_notice(request: NoticeParseRequest) -> ParsedNoticeResu
             file_name=request.file_name,
             raw_content=request.raw_content or "",
         )
-        return NoticeParser.parse_notice_text(
+        return await NoticeParser.parse_notice_text_ai(
             text=extracted_text,
             legal_name=request.legal_name or "Enterprise",
         )

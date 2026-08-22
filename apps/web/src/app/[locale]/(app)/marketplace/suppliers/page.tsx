@@ -20,6 +20,11 @@ import {
   ArrowRight,
   Send,
 } from 'lucide-react';
+import {
+  AmbientOrbs,
+  ArchitecturalGrid,
+  SpecularHorizonBeam,
+} from '@/components/ui/ambient-background';
 
 export default function SupplierMarketplacePage() {
   const t = useTranslations('marketplace');
@@ -103,9 +108,14 @@ export default function SupplierMarketplacePage() {
   };
 
   return (
-    <div className="min-h-screen bg-canvas">
+    <div className="min-h-screen bg-[#f5f4f0] font-['Inter',sans-serif] selection:bg-[#ef4d23]/20 selection:text-[#ef4d23] relative overflow-hidden">
+      {/* Dynamic Ambient Background Layers */}
+      <AmbientOrbs theme="warm" intensity="subtle" />
+      <ArchitecturalGrid gridSize={32} />
+      <div className="pointer-events-none absolute inset-0 ambient-dot-grid opacity-50" aria-hidden="true" />
+
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-surface-white border-b border-hairline px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-soft-flat">
+      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-neutral-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-sm relative">
         <div className="flex items-center gap-6">
           <Link href="/dashboard" className="flex items-center space-x-2.5">
             <SaarthiLogo className="w-8 h-8" />

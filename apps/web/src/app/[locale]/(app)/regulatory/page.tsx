@@ -18,6 +18,11 @@ import {
   ArrowRight,
   ShieldCheck,
 } from 'lucide-react';
+import {
+  AmbientOrbs,
+  ArchitecturalGrid,
+  SpecularHorizonBeam,
+} from '@/components/ui/ambient-background';
 
 export default function RegulatoryIntelligencePage() {
   const t = useTranslations('regulatory');
@@ -59,18 +64,29 @@ export default function RegulatoryIntelligencePage() {
   const filteredUpdates = updates.filter((u) => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
+    const title = (u.title || '').toLowerCase();
+    const titleHi = (u.title_hi || u.titleHi || '').toLowerCase();
+    const source = (u.source || '').toLowerCase();
+    const summaryEn = (u.summary_en || u.summaryEn || '').toLowerCase();
+    const summaryHi = (u.summary_hi || u.summaryHi || '').toLowerCase();
     return (
-      u.title.toLowerCase().includes(q) ||
-      (u.titleHi && u.titleHi.toLowerCase().includes(q)) ||
-      u.source.toLowerCase().includes(q) ||
-      u.summaryEn.toLowerCase().includes(q)
+      title.includes(q) ||
+      titleHi.includes(q) ||
+      source.includes(q) ||
+      summaryEn.includes(q) ||
+      summaryHi.includes(q)
     );
   });
 
   return (
-    <div className="min-h-screen bg-canvas">
+    <div className="min-h-screen bg-[#f5f4f0] font-['Inter',sans-serif] selection:bg-[#ef4d23]/20 selection:text-[#ef4d23] relative overflow-hidden">
+      {/* Dynamic Ambient Background Layers */}
+      <AmbientOrbs theme="cool" intensity="subtle" />
+      <ArchitecturalGrid gridSize={32} />
+      <div className="pointer-events-none absolute inset-0 ambient-dot-grid opacity-50" aria-hidden="true" />
+
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-surface-white border-b border-hairline px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-soft-flat">
+      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-neutral-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-sm relative">
         <div className="flex items-center gap-6">
           <Link href="/dashboard" className="flex items-center space-x-2.5">
             <SaarthiLogo className="w-8 h-8" />

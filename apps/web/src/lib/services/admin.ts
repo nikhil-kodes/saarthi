@@ -119,7 +119,7 @@ export class AdminService {
 
       const [instancesRes, noticesRes, scoreRes] = await Promise.all([
         adminSupabase
-          .from('compliance_instances')
+          .from('business_compliance_instances')
           .select('status')
           .eq('business_id', b.id),
         adminSupabase
@@ -185,7 +185,7 @@ export class AdminService {
     ] = await Promise.all([
       adminSupabase.from('businesses').select('*').eq('id', businessId).single(),
       adminSupabase
-        .from('compliance_instances')
+        .from('business_compliance_instances')
         .select('*, compliance_requirements(*)')
         .eq('business_id', businessId),
       adminSupabase

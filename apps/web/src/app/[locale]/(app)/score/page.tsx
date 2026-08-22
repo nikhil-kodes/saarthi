@@ -17,6 +17,11 @@ import {
   Loader2,
   ChevronRight,
 } from 'lucide-react';
+import {
+  AmbientOrbs,
+  ArchitecturalGrid,
+  SpecularHorizonBeam,
+} from '@/components/ui/ambient-background';
 
 export default function ComplianceHealthScorePage() {
   const t = useTranslations('score');
@@ -155,9 +160,14 @@ export default function ComplianceHealthScorePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#ededed] font-['Inter',sans-serif] selection:bg-[#ef4d23]/20 selection:text-[#ef4d23]">
+    <div className="min-h-screen bg-[#f5f4f0] font-['Inter',sans-serif] selection:bg-[#ef4d23]/20 selection:text-[#ef4d23] relative overflow-hidden">
+      {/* Dynamic Ambient Background Layers */}
+      <AmbientOrbs theme="emerald" intensity="subtle" />
+      <ArchitecturalGrid gridSize={32} />
+      <div className="pointer-events-none absolute inset-0 ambient-dot-grid opacity-50" aria-hidden="true" />
+
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-neutral-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-sm">
+      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-neutral-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-sm relative">
         <div className="flex items-center gap-6">
           <Link href="/dashboard" className="flex items-center space-x-2.5 group">
             <SaarthiLogo className="w-8 h-8" />

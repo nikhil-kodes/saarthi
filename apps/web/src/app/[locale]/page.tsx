@@ -5,6 +5,11 @@ import Navbar from '@/components/Navbar';
 import DashboardPreview from '@/components/DashboardPreview';
 import Gauge from '@/components/Gauge';
 import { DotMatrix, GridCross, GhostGridSection } from '@/components/ui/grid-pattern';
+import {
+  AmbientOrbs,
+  ArchitecturalGrid,
+  SpecularHorizonBeam,
+} from '@/components/ui/ambient-background';
 import { GsapTiltCard, GsapCounter } from '@/components/ui/gsap-motion';
 import { useParams } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
@@ -18,6 +23,7 @@ import {
   ShieldCheck,
   Calendar,
   Check,
+  Sparkles,
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -41,14 +47,20 @@ export default function LandingPage() {
   const simulatedPercentage = Math.round((simulatedScore / 900) * 100);
 
   return (
-    <div className="min-h-screen w-full bg-[#ededed] font-['Inter',sans-serif] selection:bg-[#ef4d23]/20 selection:text-[#ef4d23] overflow-x-hidden relative">
+    <div className="min-h-screen w-full bg-[#f6f5f1] font-['Inter',sans-serif] selection:bg-[#ef4d23]/20 selection:text-[#ef4d23] overflow-x-hidden relative">
+      {/* Dynamic Global Ambient Glow Layer */}
+      <AmbientOrbs theme="warm" intensity="subtle" />
+
+      {/* Global Architectural Grid */}
+      <ArchitecturalGrid gridSize={32} />
+
       {/* Global Background Dot Matrix Pattern */}
-      <DotMatrix color="rgba(0, 0, 0, 0.05)" spacing={24} dotSize={1.15} />
+      <DotMatrix color="rgba(0, 0, 0, 0.04)" spacing={24} dotSize={1.15} />
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* 1. HERO SECTION (Full-Viewport with Background Video)             */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      <div className="p-2.5 sm:p-4">
+      <div className="p-2.5 sm:p-4 relative z-10">
         <section className="relative w-full min-h-[calc(100vh-20px)] sm:min-h-[calc(100vh-32px)] overflow-hidden bg-[#d9d9d9] rounded-2xl sm:rounded-3xl flex flex-col justify-between shadow-sm border border-neutral-300/80">
           {/* Background Video */}
           <video
@@ -70,8 +82,9 @@ export default function LandingPage() {
             />
           </video>
 
-          {/* Above the video: white overlay */}
+          {/* Dynamic Light Overlay & Subtle Floating Beacon */}
           <div className="absolute inset-0 bg-white/10 pointer-events-none" />
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-[radial-gradient(circle,rgba(255,255,255,0.4)_0%,rgba(239,77,35,0.08)_50%,transparent_80%)] blur-[70px] pointer-events-none" />
 
           {/* Foreground content wrapper */}
           <div className="relative z-10 flex flex-col h-full justify-between">
@@ -81,8 +94,8 @@ export default function LandingPage() {
             {/* Hero Content (centered) */}
             <div className="flex flex-col items-center px-4 pt-6 sm:pt-10 pb-6 text-center max-w-5xl mx-auto">
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 bg-white/95 backdrop-blur-md rounded-full px-4 py-1.5 shadow-sm text-[13px] font-medium text-neutral-800 border border-neutral-200/90">
-                <span className="w-2 h-2 rounded-full bg-[#ef4d23]" />
+              <div className="inline-flex items-center gap-2 bg-white/95 backdrop-blur-md rounded-full px-4 py-1.5 shadow-sm text-[13px] font-medium text-neutral-800 border border-neutral-200/90 hover:scale-[1.02] transition-transform">
+                <span className="w-2 h-2 rounded-full bg-[#ef4d23] animate-pulse" />
                 <span className="font-mono text-[12px] font-semibold text-neutral-700">
                   {isHi
                     ? 'सारथी ट्रस्ट प्रोटोकॉल · केंद्रीय व UP राज्य अधिनियम'
@@ -149,7 +162,7 @@ export default function LandingPage() {
               <div className="mt-5 sm:mt-6 flex flex-col sm:flex-row items-center gap-3">
                 <Link
                   href="/signup"
-                  className="inline-flex items-center gap-3 bg-[#0b0f1a] hover:bg-[#182238] active:scale-[0.98] text-white rounded-full pl-6 sm:pl-7 pr-2 py-2 sm:py-2.5 text-[14px] font-semibold transition-all shadow-md group"
+                  className="inline-flex items-center gap-3 bg-[#0b0f1a] hover:bg-[#182238] active:scale-[0.98] text-white rounded-full pl-6 sm:pl-7 pr-2 py-2 sm:py-2.5 text-[14px] font-semibold transition-all shadow-md group border border-white/10"
                 >
                   <span>{isHi ? 'निःशुल्क शुरू करें' : 'Start Free Trial'}</span>
                   <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/15 flex items-center justify-center group-hover:bg-white/25 transition-colors">
@@ -159,7 +172,7 @@ export default function LandingPage() {
 
                 <a
                   href="#notice-demo"
-                  className="inline-flex items-center gap-2 bg-white/90 hover:bg-white text-neutral-800 rounded-full px-5 py-2 sm:py-2.5 text-[13px] font-semibold border border-neutral-200/80 shadow-sm transition-all"
+                  className="inline-flex items-center gap-2 bg-white/90 hover:bg-white text-neutral-800 rounded-full px-5 py-2 sm:py-2.5 text-[13px] font-semibold border border-neutral-200/80 shadow-sm transition-all hover:scale-[1.02]"
                 >
                   <FileText className="w-4 h-4 text-[#ef4d23]" />
                   <span>{isHi ? 'नोटिस OCR डेमो देखें' : 'Notice OCR Demo'}</span>
@@ -167,7 +180,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Dashboard Preview Tray (bleeding off the bottom edge) */}
+            {/* Dashboard Preview Tray */}
             <div className="pt-2 sm:pt-4">
               <DashboardPreview />
             </div>
@@ -183,7 +196,7 @@ export default function LandingPage() {
         label={isHi ? 'वैधानिक टेलीमेट्री' : 'Statutory Telemetry'}
         tag="GRID.01_METRICS"
       >
-        <div className="text-center mb-8 space-y-2">
+        <div className="text-center mb-8 space-y-2 relative z-10">
           <p className="text-[12px] font-bold uppercase tracking-widest text-[#ef4d23] font-mono">
             {isHi ? '// संस्थागत विश्वास व ऑडिट रिकॉर्ड' : '// STATUTORY SCALE & AUDIT TRAIL'}
           </p>
@@ -194,14 +207,15 @@ export default function LandingPage() {
           </h2>
         </div>
 
-        {/* Ghost Grid Partition Box with Dotted Dividers */}
-        <div className="relative border border-dashed border-neutral-300 bg-white rounded-2xl overflow-hidden shadow-sm">
+        {/* Ghost Grid Partition Box with Luminous Ambient Underlay */}
+        <div className="relative border border-dashed border-neutral-300 bg-white/90 backdrop-blur-md rounded-2xl overflow-hidden shadow-sm">
+          <SpecularHorizonBeam color="#ef4d23" className="top-0" />
           <GridCross className="top-0 left-0" />
           <GridCross className="top-0 right-0" />
           <GridCross className="bottom-0 left-0" />
           <GridCross className="bottom-0 right-0" />
 
-          <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-dashed divide-neutral-300">
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-dashed divide-neutral-300 relative z-10">
             {[
               {
                 num: 63,
@@ -228,7 +242,7 @@ export default function LandingPage() {
                 change: isHi ? 'UP MSME नीति 2026' : 'UP MSME Policy 2026',
               },
             ].map((stat, i) => (
-              <div key={i} className="p-6 sm:p-8 text-left space-y-1 relative group hover:bg-[#f5f2ee]/50 transition-colors">
+              <div key={i} className="p-6 sm:p-8 text-left space-y-1 relative group hover:bg-[#f5f2ee]/70 transition-colors">
                 <span className="text-[28px] sm:text-[38px] font-bold text-neutral-900 font-mono tracking-tight block">
                   <GsapCounter value={stat.num} suffix={stat.suffix} />
                 </span>
@@ -248,7 +262,7 @@ export default function LandingPage() {
         label={isHi ? 'मंच वास्तुकला' : 'Platform Architecture'}
         tag="GRID.02_MODULES"
       >
-        <div className="text-center space-y-3 max-w-3xl mx-auto mb-10">
+        <div className="text-center space-y-3 max-w-3xl mx-auto mb-10 relative z-10">
           <span className="inline-block px-3.5 py-1 rounded-full bg-[#ef4d23]/10 text-[#ef4d23] font-bold text-[12px] uppercase tracking-wider font-mono">
             {isHi ? 'एकीकृत अनुपालन वास्तुकला' : 'Unified Compliance Architecture'}
           </span>
@@ -265,7 +279,7 @@ export default function LandingPage() {
         </div>
 
         {/* Bento Grid with Intersecting Ghost Lines */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 relative z-10">
           {[
             {
               icon: Calendar,
@@ -323,11 +337,14 @@ export default function LandingPage() {
             },
           ].map((card, i) => (
             <GsapTiltCard key={i} maxTilt={6}>
-              <div className="relative bg-white rounded-2xl border border-dashed border-neutral-300 p-6 sm:p-7 shadow-sm hover:shadow-md hover:border-[#ef4d23] transition-all flex flex-col justify-between space-y-4 text-left group overflow-hidden h-full">
+              <div className="relative bg-white/95 backdrop-blur-md rounded-2xl border border-dashed border-neutral-300 p-6 sm:p-7 shadow-sm hover:shadow-md hover:border-[#ef4d23] transition-all flex flex-col justify-between space-y-4 text-left group overflow-hidden h-full">
                 <GridCross className="top-0 left-0" />
                 <GridCross className="top-0 right-0" />
                 <GridCross className="bottom-0 left-0" />
                 <GridCross className="bottom-0 right-0" />
+
+                {/* Subtle top edge glow on hover */}
+                <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-40 h-24 bg-[#ef4d23]/15 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
                 <div className="space-y-3 relative z-10">
                   <div className="flex items-center justify-between">
@@ -341,7 +358,7 @@ export default function LandingPage() {
                       </span>
                     </div>
                   </div>
-                  <h3 className="text-[17px] font-bold text-neutral-900">{card.title}</h3>
+                  <h3 className="text-[17px] font-bold text-neutral-900 group-hover:text-[#ef4d23] transition-colors">{card.title}</h3>
                   <p className="text-[13px] text-neutral-600 leading-relaxed">{card.desc}</p>
                 </div>
 
@@ -363,13 +380,14 @@ export default function LandingPage() {
         label={isHi ? 'इंटरैक्टिव सिमुलेशन' : 'Interactive Simulation'}
         tag="GRID.03_TRUST_SIMULATOR"
       >
-        <div className="relative bg-white rounded-3xl border border-dashed border-neutral-300 p-6 sm:p-10 shadow-sm space-y-8 overflow-hidden">
+        <div className="relative bg-white/95 backdrop-blur-md rounded-3xl border border-dashed border-neutral-300 p-6 sm:p-10 shadow-sm space-y-8 overflow-hidden">
+          <SpecularHorizonBeam color="#ef4d23" className="top-0" />
           <GridCross className="top-0 left-0" />
           <GridCross className="top-0 right-0" />
           <GridCross className="bottom-0 left-0" />
           <GridCross className="bottom-0 right-0" />
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-dashed border-neutral-300 pb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-dashed border-neutral-300 pb-6 relative z-10">
             <div className="space-y-1 text-left">
               <span className="px-3 py-1 rounded-full bg-[#ef4d23]/10 text-[#ef4d23] font-bold text-[11px] uppercase tracking-wider inline-block font-mono">
                 {isHi ? 'इंटरैक्टिव विश्वास इंजन' : 'Interactive Trust Engine'}
@@ -402,7 +420,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
             {/* Toggles */}
             <div className="lg:col-span-7 space-y-3 text-left">
               {[
@@ -476,13 +494,15 @@ export default function LandingPage() {
               ))}
             </div>
 
-            {/* Gauge Display */}
-            <div className="lg:col-span-5 bg-[#f5f2ee] rounded-2xl p-6 border border-dashed border-neutral-300 text-center space-y-4 shadow-sm relative">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 font-mono">
+            {/* Gauge Display with Ambient Glow */}
+            <div className="lg:col-span-5 bg-[#f5f2ee] rounded-2xl p-6 border border-dashed border-neutral-300 text-center space-y-4 shadow-sm relative overflow-hidden">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-[#ef4d23]/15 rounded-full blur-3xl pointer-events-none" />
+
+              <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 font-mono relative z-10 block">
                 {isHi ? 'गणना किया गया विश्वास स्कोर' : 'Calculated Trust Rating'}
               </span>
 
-              <div className="py-2">
+              <div className="py-2 relative z-10">
                 <Gauge
                   value={simulatedPercentage}
                   color="#ef4d23"
@@ -492,7 +512,7 @@ export default function LandingPage() {
                 />
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1 relative z-10">
                 <div className="text-[28px] font-mono font-bold text-neutral-900">
                   {simulatedScore} <span className="text-[14px] font-normal text-neutral-500">/ 900</span>
                 </div>
@@ -519,7 +539,7 @@ export default function LandingPage() {
         label={isHi ? 'वैधानिक AI सुरक्षा' : 'Statutory AI Defense'}
         tag="GRID.04_NOTICE_OCR"
       >
-        <div className="text-center space-y-2 mb-10">
+        <div className="text-center space-y-2 mb-10 relative z-10">
           <span className="px-3.5 py-1 rounded-full bg-[#ef4d23]/10 text-[#ef4d23] font-bold text-[12px] uppercase tracking-wider inline-block font-mono">
             {isHi ? '30-सेकंड कानूनी सुरक्षा' : '30-Second Legal Defense'}
           </span>
@@ -535,10 +555,10 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-left">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-left relative z-10">
           {/* Raw Notice Box */}
           <GsapTiltCard maxTilt={5}>
-            <div className="bg-white rounded-2xl border border-dashed border-neutral-300 p-5 space-y-3 font-mono text-[12px] text-neutral-600 shadow-sm relative overflow-hidden h-full">
+            <div className="bg-white/95 backdrop-blur-md rounded-2xl border border-dashed border-neutral-300 p-5 space-y-3 font-mono text-[12px] text-neutral-600 shadow-sm relative overflow-hidden h-full">
               <GridCross className="top-0 left-0" />
               <GridCross className="top-0 right-0" />
               <div className="absolute top-0 left-0 w-1.5 h-full bg-red-500" />
@@ -562,7 +582,7 @@ export default function LandingPage() {
 
           {/* Plain Breakdown Box */}
           <GsapTiltCard maxTilt={5}>
-            <div className="bg-white rounded-2xl border border-dashed border-neutral-300 p-5 space-y-3 shadow-sm relative overflow-hidden h-full">
+            <div className="bg-white/95 backdrop-blur-md rounded-2xl border border-dashed border-neutral-300 p-5 space-y-3 shadow-sm relative overflow-hidden h-full">
               <GridCross className="top-0 left-0" />
               <GridCross className="top-0 right-0" />
               <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500" />
@@ -622,7 +642,7 @@ export default function LandingPage() {
         label={isHi ? 'सदस्यता योजनाएं' : 'Subscription Tiers'}
         tag="GRID.05_PRICING"
       >
-        <div className="text-center space-y-2 mb-10">
+        <div className="text-center space-y-2 mb-10 relative z-10">
           <span className="px-3.5 py-1 rounded-full bg-[#f5f2ee] text-neutral-700 font-bold text-[12px] uppercase tracking-wider inline-block font-mono">
             {isHi ? 'स्पष्ट मूल्य निर्धारण' : 'Transparent Pricing'}
           </span>
@@ -636,9 +656,9 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 text-left">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 text-left relative z-10">
           {/* Starter */}
-          <div className="relative bg-white rounded-3xl border border-dashed border-neutral-300 p-7 space-y-6 flex flex-col justify-between shadow-sm overflow-hidden">
+          <div className="relative bg-white/95 backdrop-blur-md rounded-3xl border border-dashed border-neutral-300 p-7 space-y-6 flex flex-col justify-between shadow-sm overflow-hidden">
             <GridCross className="top-0 left-0" />
             <GridCross className="top-0 right-0" />
             <GridCross className="bottom-0 left-0" />
@@ -680,12 +700,15 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          {/* Pro (Featured) */}
-          <div className="bg-[#0b0f1a] text-white rounded-3xl border-2 border-[#ef4d23] p-7 space-y-6 flex flex-col justify-between shadow-lg relative overflow-hidden">
-            <span className="absolute -top-3 right-6 px-3 py-0.5 rounded-full bg-[#ef4d23] text-white font-bold text-[10px] uppercase tracking-wider font-mono">
+          {/* Pro (Featured with Specular Luminous Halo) */}
+          <div className="bg-[#0b0f1a] text-white rounded-3xl border-2 border-[#ef4d23] p-7 space-y-6 flex flex-col justify-between shadow-xl relative overflow-hidden">
+            {/* Luminous Glow Halo */}
+            <div className="absolute -top-24 -right-24 w-60 h-60 bg-[#ef4d23]/25 rounded-full blur-3xl pointer-events-none" />
+
+            <span className="absolute -top-3 right-6 px-3 py-0.5 rounded-full bg-[#ef4d23] text-white font-bold text-[10px] uppercase tracking-wider font-mono shadow-sm">
               {isHi ? 'सर्वाधिक लोकप्रिय' : 'Most Popular'}
             </span>
-            <div className="space-y-4">
+            <div className="space-y-4 relative z-10">
               <div>
                 <h3 className="text-[18px] font-bold text-white">
                   {isHi ? 'प्रो ऑपरेशन्स' : 'Pro Operations'}
@@ -719,14 +742,14 @@ export default function LandingPage() {
             </div>
             <Link
               href="/signup"
-              className="w-full text-center py-2.5 rounded-xl bg-[#ef4d23] hover:bg-[#df4118] text-white font-bold text-[13px] transition-colors shadow-sm"
+              className="w-full text-center py-2.5 rounded-xl bg-[#ef4d23] hover:bg-[#df4118] text-white font-bold text-[13px] transition-colors shadow-sm relative z-10"
             >
               {isHi ? '14 दिन का ट्रायल शुरू करें' : 'Start 14-Day Free Trial'}
             </Link>
           </div>
 
           {/* Enterprise */}
-          <div className="relative bg-white rounded-3xl border border-dashed border-neutral-300 p-7 space-y-6 flex flex-col justify-between shadow-sm overflow-hidden">
+          <div className="relative bg-white/95 backdrop-blur-md rounded-3xl border border-dashed border-neutral-300 p-7 space-y-6 flex flex-col justify-between shadow-sm overflow-hidden">
             <GridCross className="top-0 left-0" />
             <GridCross className="top-0 right-0" />
             <GridCross className="bottom-0 left-0" />
@@ -784,6 +807,10 @@ export default function LandingPage() {
         <GridCross className="bottom-0 right-0" />
 
         <div className="bg-[#0b0f1a] text-white rounded-3xl p-8 sm:p-14 text-center space-y-6 shadow-xl relative overflow-hidden border border-neutral-800">
+          <SpecularHorizonBeam color="#ef4d23" className="top-0" />
+          {/* Radiant Ambient Core Halo */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-[radial-gradient(circle,rgba(239,77,35,0.22)_0%,rgba(18,58,115,0.18)_50%,transparent_75%)] blur-[80px] pointer-events-none" />
+
           <div className="space-y-3 relative z-10">
             <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight max-w-xl mx-auto">
               {isHi

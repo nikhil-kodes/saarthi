@@ -1,6 +1,9 @@
+import json
 import re
 from typing import Any, Dict, Optional
+import httpx
 from pydantic import BaseModel
+from app.config import settings
 
 
 class ParsedNoticeResult(BaseModel):
@@ -21,8 +24,68 @@ class ParsedNoticeResult(BaseModel):
 class NoticeParser:
     """Parses raw notice OCR text into structured financial demands, deadlines,
 
-    bilingual plain-language explanations, and draft response letters per PRD.md §9.
+    bilingual plain-language explanations, and draft response letters using OpenRouter / heuristics.
     """
+
+    @classmethod
+    async def parse_notice_text_ai(cls, text: str, legal_name: str = "Enterprise") -> ParsedNoticeResult:
+        """Uses OpenRouter Gemma to extract structured statutory fields, bilingual explanations, and legal reply."""
+        if settings.openrouter_api_key:
+            try:
+                system_prompt = f"""You are an elite Indian Corporate Tax & Regulatory Legal Expert at Saarthi.
+Analyze the following statutory notice text for MSME enterprise: "{legal_name}".
+
+Extract the following JSON strictly with this schema:
+{{
+  "authority": "Exact issuing authority name (e.g. State Tax Officer, GST Department, UP)",
+  "notice_number": "Notice or Reference or DIN number",
+  "issue_date": "YYYY-MM-DD or estimated recent date",
+  "response_deadline": "YYYY-MM-DD deadline (typically 7-30 days from issue)",
+  "demand_amount": float_numeric_tax_demand_in_inr,
+  "penalty_amount": float_numeric_penalty_in_inr,
+  "severity": "low" | "moderate" | "urgent" | "critical",
+  "status": "action_required",
+  "plain_summary_en": "3-part clear explanation in English: 1. What Happened 2. Financial Liability & Penalty Risk 3. Required Action Steps",
+  "plain_summary_hi": "3-part clear explanation in Hindi (Devanagari): 1. क्या मामला है 2. वित्तीय देनदारी एवं जोखिम 3. आवश्यक कदम",
+  "reply_draft_en": "Formal written legal reply letter addressed to the authority ready to print on company letterhead",
+  "parsed_fields": {{
+    "notice_type": "GST_DRC01A / IT_148A / FSSAI / LABOUR etc",
+    "applicable_sections": ["Section list"],
+    "key_allegations": "summary"
+  }}
+}}
+Output ONLY valid JSON without markdown wrapping.
+"""
+                async with httpx.AsyncClient(timeout=45.0) as client:
+                    resp = await client.post(
+                        "https://openrouter.ai/api/v1/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {settings.openrouter_api_key}",
+                            "Content-Type": "application/json",
+                            "HTTP-Referer": "https://saarthi.app",
+                            "X-Title": "Saarthi Notice OCR",
+                        },
+                        json={
+                            "model": settings.openrouter_model or "google/gemma-3-4b-it:free",
+                            "messages": [
+                                {"role": "system", "content": system_prompt},
+                                {"role": "user", "content": f"Notice OCR Content:\n{text[:4000]}"},
+                            ],
+                            "temperature": 0.2,
+                        },
+                    )
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        raw_content = data["choices"][0]["message"]["content"].strip()
+                        if raw_content.startswith("```"):
+                            raw_content = re.sub(r"^```(?:json)?\n|\n```$", "", raw_content, flags=re.MULTILINE)
+                        parsed = json.loads(raw_content)
+                        return ParsedNoticeResult(**parsed)
+            except Exception as e:
+                print(f"[NoticeParser] OpenRouter AI fallback triggered: {e}")
+
+        # Fallback to pattern matching
+        return cls.parse_notice_text(text=text, legal_name=legal_name)
 
     @classmethod
     def parse_notice_text(cls, text: str, legal_name: str = "Enterprise") -> ParsedNoticeResult:
