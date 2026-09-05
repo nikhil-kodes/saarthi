@@ -33,7 +33,7 @@ async def query_regulatory_rag(request: RAGQueryRequest) -> RAGQueryResponse:
 async def summarize_regulatory_circular(request: SummarizeRequest) -> CircularSummary:
     """Summarizes a regulatory circular into plain English and Hindi with an impact matrix."""
     try:
-        return CircularSummarizer.summarize_circular(
+        return await CircularSummarizer.summarize_circular_ai(
             title=request.title,
             content=request.content,
             source=request.source,

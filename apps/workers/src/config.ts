@@ -13,6 +13,7 @@ export const QUEUE_NAMES = [
   'marketplace',
   'payments',
   'regulatory',
+  'campaigns',
 ] as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[number];

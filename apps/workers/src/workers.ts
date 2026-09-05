@@ -1,6 +1,13 @@
 import { Worker, type Job } from 'bullmq';
 import { redisConfig, QUEUE_NAMES, type QueueName } from './config';
 import { processHealthCheck } from './processors/health';
+import { processOCRJob } from './processors/ocr';
+import { processScoreJob } from './processors/score';
+import { processComplianceJob } from './processors/compliance';
+import { processRegulatoryJob } from './processors/regulatory';
+import { processCampaignJob } from './processors/campaigns';
+import { processMarketplaceJob } from './processors/marketplace';
+import { processPaymentsJob } from './processors/payments';
 
 export const workers: Worker[] = [];
 
@@ -13,6 +20,26 @@ export function startWorkers(): Worker[] {
 
         if (job.name === 'HEALTH_CHECK') {
           return processHealthCheck(job);
+        }
+
+        switch (name) {
+          case 'ocr':
+            return processOCRJob(job as any);
+          case 'compliance':
+            return processComplianceJob(job as any);
+          case 'regulatory':
+            return processRegulatoryJob(job as any);
+          case 'campaigns':
+            return processCampaignJob(job as any);
+          case 'marketplace':
+            return processMarketplaceJob(job as any);
+          case 'payments':
+            return processPaymentsJob(job as any);
+          case 'ai':
+            if (job.name === 'SCORE_RECOMPUTE') {
+              return processScoreJob(job as any);
+            }
+            break;
         }
 
         console.log(`[${name.toUpperCase()}] No dedicated processor for job: ${job.name}`);

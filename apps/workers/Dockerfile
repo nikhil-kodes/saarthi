@@ -13,8 +13,7 @@ RUN pnpm install --filter=@saarthi/workers...
 
 COPY apps/workers/ ./apps/workers/
 
-RUN pnpm --filter=@saarthi/workers build
-
 ENV NODE_ENV=production
 
-CMD ["node", "apps/workers/dist/index.js"]
+# Using tsx to run typescript natively and avoid ESM path resolution issues in dist/
+CMD ["pnpm", "exec", "tsx", "apps/workers/src/index.ts"]

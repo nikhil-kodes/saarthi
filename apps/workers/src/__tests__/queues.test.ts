@@ -3,7 +3,7 @@ import { QUEUE_NAMES } from '../config';
 
 describe('Worker Queues Configuration', () => {
   it('should declare exactly 8 queues as required by WORKFLOW.md §17', () => {
-    expect(QUEUE_NAMES).toHaveLength(8);
+    expect(QUEUE_NAMES).toHaveLength(9);
   });
 
   it('should contain all required queue names', () => {
